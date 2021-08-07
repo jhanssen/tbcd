@@ -88,11 +88,11 @@ async function readDataFile(file: string) {
                 case "image":
                     if (typeof d.sha1 === "string") {
                         let fn = d.sha1;
-                        if (d.type === undefined || d.type === "tga") {
+                        if (d.small === true) {
                             fn += ".tga";
                         }
                         readDataFile(fn).then((data: Buffer) => {
-                            send("image", { sha1: d.sha1, type: d.type, data: data.toString("base64") });
+                            send("image", { sha1: d.sha1, small: d.small, data: data.toString("base64") });
                         }).catch(e => {
                             error("image", e.message);
                         });
@@ -108,6 +108,8 @@ async function readDataFile(file: string) {
                             // const tga = new TGA(data);
                             convertToTga(data, 100).then((buf: Buffer) => {
                                 return writeDataFile(`${d.sha1}.tga`, buf);
+                            }).then(() => {
+                                return writeDataFile(d.sha1, data);
                             }).then(() => {
                                 send("setImage", { sha1: d.sha1 });
                             }).catch(e => {
