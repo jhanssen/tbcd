@@ -1,43 +1,63 @@
 import Options from "@jhanssen/options";
-import SerialPort from "serialport";
-
-type Readline = SerialPort.parsers.Readline;
+import WebSocket from "ws";
+import { API } from "./tbcd";
 
 const options = Options({ prefix: "tbcd" });
+const WebSocketServer = WebSocket.Server;
 
-const data: {
-    port?: SerialPort;
-    parser?: Readline;
-} = {};
-
-const portName = options("port");
-if (typeof portName !== "string") {
-    console.error("invalid port name", portName);
+const comPort = options("com-port");
+if (typeof comPort !== "string") {
+    console.error("invalid port name", comPort);
     process.exit(1);
 }
+const wsPort = options.int("ws-port", 8089);
 
-function run() {
-    return new Promise<void>((resolve, reject) => {
-        data.port = new SerialPort(portName as string, {
-            baudRate: 9600
-        });
-        data.port.on("error", e => {
-            reject(e);
-        });
-        data.parser = data.port.pipe(new SerialPort.parsers.Readline({ delimiter: "\r\n" }));
-        data.parser.on("data", (data: string) => {
-            console.log("got data", data);
-            resolve();
-        });
-        data.port.write("status\r\n");
+const api = new API(comPort);
+const wssv1 = new WebSocketServer({ port: wsPort, path: "/api/v1" });
+console.log(`listening on ws: ${wsPort}`);
+wssv1.on("connection", ws => {
+    const send = (type: string, msg: any) => {
+        try {
+            ws.send(JSON.stringify({ type: type, data: msg }));
+        } catch (e) {
+            console.error("send error", type, e);
+        }
+    };
+
+    const error = (type: string, err: string) => {
+        send("error", { "errorType": type, "error": err });
+    };
+
+    api.on("currentFile", (file: string) => {
+        send("currentFile", file);
     });
-}
 
-(async function() {
-    await run();
-})().then(() => {
-    process.exit();
-}).catch(e => {
-    console.error(e.message);
-    process.exit(1);
+    ws.on("message", msg => {
+        // console.log("msg", msg.toString());
+        try {
+            const d = JSON.parse(msg.toString());
+            switch (d.type) {
+            case "images":
+                api.getImages().then(imgs => {
+                    send("images", imgs);
+                }).catch(e => { throw e; });
+                break;
+            case "currentFile":
+                api.getCurrentFile().then(file => {
+                    send("currentFile", file);
+                }).catch(e => { throw e; });
+                break;
+            case "setCurrentFile":
+                if (typeof d.file === "string") {
+                    api.selectFile(d.file);
+                } else {
+                    error("setCurrentFile", "need a file parameter");
+                }
+                break;
+            }
+        } catch (e) {
+            console.error("message error", e);
+            error("message", e.message);
+        }
+    });
 });
