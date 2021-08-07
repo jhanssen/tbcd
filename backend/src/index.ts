@@ -2,7 +2,7 @@ import Options from "@jhanssen/options";
 import WebSocket from "ws";
 import xdg from "xdg-basedir";
 import mkdirp from "mkdirp";
-import { API } from "./tbcd";
+import { API } from "./api";
 import { convertToTga } from "./image";
 import assert from "./assert";
 import fs from "fs/promises";
