@@ -1,13 +1,7 @@
 import SerialPort from "serialport";
 import EventEmitter from "events";
 import crypto from "crypto";
-
-function assert(condition: any, msg?: string): asserts condition {
-    if (!condition) {
-        console.error(msg);
-        process.exit();
-    }
-}
+import assert from "./assert";
 
 export interface Image {
     name: string;
