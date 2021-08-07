@@ -9,16 +9,6 @@ function assert(condition: any, msg?: string): asserts condition {
     }
 }
 
-/*
-const enum Status {
-    Disconnected,
-    Connected,
-    ReadingDiscs,
-    Waiting,
-    Ready
-}
-*/
-
 export interface Image {
     name: string;
     sha1: string;
@@ -50,7 +40,6 @@ export class API extends EventEmitter {
     private port?: SerialPort;
     private data?: string;
     private images?: Image[];
-    //private status: Status;
     private imageReqs: ImageRequest[];
     private currentFileReqs: CurrentFileRequest[];
     private cmds: Command[];
@@ -69,7 +58,6 @@ export class API extends EventEmitter {
 
         this.portName = portName;
         this.drives = ["SD:", "USB0:", "USB1:"];
-        //this.status = Status.Disconnected;
         this.imageReqs = [];
         this.currentFileReqs = [];
         this.cmds = [];
@@ -123,19 +111,16 @@ export class API extends EventEmitter {
         this.pendingImages = [];
         this.ready = true;
 
-        //this.status = Status.Connected;
         this.port = new SerialPort(this.portName, {
             baudRate: 9600
         });
         this.port.on("error", e => {
             console.error("api error", e.message);
-            //this.status = Status.Disconnected;
             setTimeout(() => {
                 this.reconnect();
             }, 1000);
         });
         this.port.on("close", () => {
-            //this.status = Status.Disconnected;
             setTimeout(() => {
                 this.reconnect();
             }, 1000);
