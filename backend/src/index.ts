@@ -87,8 +87,12 @@ async function readDataFile(file: string) {
                     break;
                 case "image":
                     if (typeof d.sha1 === "string") {
-                        readDataFile(d.sha1).then((data: Buffer) => {
-                            send("image", { sha1: d.sha1, data: data.toString("base64") });
+                        let fn = d.sha1;
+                        if (d.type === undefined || d.type === "tga") {
+                            fn += ".tga";
+                        }
+                        readDataFile(fn).then((data: Buffer) => {
+                            send("image", { sha1: d.sha1, type: d.type, data: data.toString("base64") });
                         }).catch(e => {
                             error("image", e.message);
                         });
