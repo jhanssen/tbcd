@@ -103,13 +103,18 @@ export class API extends EventEmitter {
 
     private reconnect() {
         this.imageReqs = [];
+        this.currentFileReqs = [];
         this.cmds = [];
         this.currentDir = "/";
-        this.currentDrive = 0;
         this.pendingDirs = [];
         this.pendingFiles = [];
         this.pendingImages = [];
+        this.currentDrive = 0;
         this.ready = true;
+        this.data = undefined;
+        this.images = undefined;
+        this.currentCmd = undefined;
+        this.currentFile = undefined;
 
         this.port = new SerialPort(this.portName, {
             baudRate: 9600
@@ -117,11 +122,13 @@ export class API extends EventEmitter {
         this.port.on("error", e => {
             console.error("api error", e.message);
             setTimeout(() => {
+                console.log("com error, trying to reconnect");
                 this.reconnect();
             }, 1000);
         });
         this.port.on("close", () => {
             setTimeout(() => {
+                console.log("com closed, trying to reconnect");
                 this.reconnect();
             }, 1000);
         });
