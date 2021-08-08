@@ -1,10 +1,10 @@
 .boxart {
-    max-width: 500px;
+    max-width: 350px;
     max-height: 500px;
 }
 
 .mat-form-field {
-    width: 500px !important;
+    width: 350px !important;
 }
 
 .footer {
