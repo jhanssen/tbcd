@@ -2,3 +2,7 @@
     max-width: 500px;
     max-height: 500px;
 }
+
+.mat-form-field {
+    width: 500px !important;
+}
