@@ -1,17 +1,33 @@
-<h1>
-  {{ file }}
-</h1>
-<div>
-  <mat-form-field appearance="fill">
-    <mat-label>Name</mat-label>
-    <input matInput placeholder="Name" [(ngModel)]="name"/>
-  </mat-form-field>
-</div>
-<div>
-  <img [src]="imageData | sanitizeUrl" class="boxart"/>
-<div>
-  <button mat-button (click)="select()">Select</button>
-  <button mat-button (click)="scrape()">Scrape</button>
-  <button mat-button (click)="save()">Save</button>
-  <button mat-button (click)="back()">Back</button>
+<div class="height">
+  <mat-toolbar color="accent">
+    <mat-toolbar-row class="dcenter">
+      <h1 class="tcenter">
+        {{ file }}
+      </h1>
+    </mat-toolbar-row>
+  </mat-toolbar>
+  <div class="topspace">
+    <mat-form-field appearance="fill">
+      <mat-label>Name</mat-label>
+      <input matInput placeholder="Name" [(ngModel)]="name"/>
+    </mat-form-field>
+  </div>
+  <div class="hboxart">
+    <img [src]="imageData | sanitizeUrl" class="boxart"/>
+  </div>
+  <mat-toolbar color="accent">
+    <mat-toolbar-row>
+      <div class="buttons">
+        <div class="button">
+          <button mat-raised-button color="primary" (click)="save()">Save</button>
+        </div>
+        <div class="button">
+          <button mat-button color="white-bg" (click)="back()">Back</button>
+        </div>
+        <div class="button">
+          <button mat-raised-button (click)="scrape()">Scrape</button>
+        </div>
+      </div>
+    </mat-toolbar-row>
+  </mat-toolbar>
 </div>

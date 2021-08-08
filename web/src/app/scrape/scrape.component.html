@@ -1,4 +1,11 @@
-<div>
+<div class="height">
+  <mat-toolbar color="accent">
+    <mat-toolbar-row class="dcenter">
+      <h1 class="tcenter">
+        {{ name }}
+      </h1>
+    </mat-toolbar-row>
+  </mat-toolbar>
   <div class="top">
     <div class="list">
       <div *ngFor="let candidate of candidates" class="item">
@@ -8,8 +15,16 @@
       </div>
     </div>
   </div>
-  <div>
-    <button mat-button (click)="save()">Save</button>
-    <button mat-button (click)="back()">Back</button>
-  </div>
+  <mat-toolbar color="accent">
+    <mat-toolbar-row>
+      <div class="buttons">
+        <div class="button">
+          <button mat-raised-button color="primary" (click)="save()">Save</button>
+        </div>
+        <div class="button">
+          <button mat-raised-button (click)="back()">Back</button>
+        </div>
+      </div>
+    </mat-toolbar-row>
+  </mat-toolbar>
 </div>

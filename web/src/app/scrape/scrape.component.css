@@ -1,5 +1,7 @@
 .top {
     min-width: 100%;
+    flex: 2;
+    margin-top: 10px;
 }
 
 .list {
@@ -30,4 +32,23 @@ img {
     max-height: 200px;
     padding: 5px;
     background-color: #a33;
+}
+
+.height {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 98vh;
+}
+
+.buttons { display: flex; }
+.button { margin: 5px; }
+
+.tcenter {
+    text-align: center;
+}
+
+.dcenter {
+    display: flex;
+    justify-content: center;
 }
