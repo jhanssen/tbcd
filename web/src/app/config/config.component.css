@@ -1,0 +1,31 @@
+.mat-form-field {
+    width: 500px !important;
+}
+
+.height {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 98vh;
+}
+
+.mat-white-bg {
+    background-color: #fff;
+}
+
+.buttons { display: flex; }
+.button { margin: 5px; }
+
+.tcenter {
+    text-align: center;
+}
+
+.dcenter {
+    display: flex;
+    justify-content: center;
+}
+
+.topspace {
+    flex: 2;
+    margin-top: 10px;
+}

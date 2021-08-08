@@ -2,17 +2,26 @@
   <mat-toolbar color="accent">
     <mat-toolbar-row class="dcenter">
       <h1 class="tcenter">
-        {{ name }} ({{ scraperName }})
+        Configuration
       </h1>
     </mat-toolbar-row>
   </mat-toolbar>
-  <div class="top">
-    <div class="list">
-      <div *ngFor="let candidate of candidates" class="item">
-        <div [class]="isSelected(candidate.image) ? 'selected' : 'thumbnail'" (click)="select(candidate.image)">
-          <img [src]="candidate.image"/>
-        </div>
-      </div>
+  <div class="topspace">
+    <div>
+      <mat-form-field appearance="fill">
+        <mat-label>WebSocket port</mat-label>
+        <input matInput placeholder="Port" [ngModel]="wsport" (input)="validateWsPort($event)"/>
+      </mat-form-field>
+    </div>
+    <div>
+      <mat-form-field appearance="fill">
+        <mat-label>Scraper</mat-label>
+        <mat-select [(ngModel)]="scraper">
+          <mat-option *ngFor="let c of scraperCandidates" [value]="c">
+            {{c}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
     </div>
   </div>
   <mat-toolbar color="accent">

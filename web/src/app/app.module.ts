@@ -8,11 +8,13 @@ import { MainComponent } from './main/main.component';
 import { SanitizeUrlModule } from './sanitizeurl/sanitizeurl.module';
 import { ImageComponent } from './image/image.component';
 import { ScrapeComponent } from './scrape/scrape.component';
+import { ConfigComponent } from './config/config.component';
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatToolbarModule } from '@angular/material/toolbar';
 
@@ -21,7 +23,8 @@ import { MatToolbarModule } from '@angular/material/toolbar';
         AppComponent,
         MainComponent,
         ImageComponent,
-        ScrapeComponent
+        ScrapeComponent,
+        ConfigComponent
     ],
     imports: [
         BrowserModule,
@@ -32,6 +35,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
         MatButtonModule,
         MatFormFieldModule,
         MatInputModule,
+        MatSelectModule,
         MatSnackBarModule,
         MatToolbarModule
     ],

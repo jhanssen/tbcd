@@ -30,6 +30,7 @@ type NameRequest = Request<StringResolve>;
 
 const initialBackoff = 500;
 const maxBackoff = 30000;
+const defaultPort = 8089;
 
 function dispatch<Type>(id: number, data: Type, reqs: Request<PromiseResolve<Type>>[]) {
     for (let idx = 0; idx < reqs.length; ++idx) {
@@ -69,6 +70,7 @@ export class WebsocketService {
     private currentFileSubject = new Subject<string>();
     private ideOpenSubject = new ReplaySubject<boolean>(1);
     private wsOpenSubject = new ReplaySubject<boolean>(1);
+    private wsPortNumber: number;
 
     private socket: WebSocket;
     private id: number = 0;
@@ -85,10 +87,11 @@ export class WebsocketService {
     private backoff: number = initialBackoff;
 
     constructor() {
-        const loc = window.location;
-        const wsport = 8089; // for now
-        this.base = `ws://${loc.hostname}:${wsport}`;
-
+        const p = window.localStorage.getItem("wsport") || (defaultPort + "");
+        this.wsPortNumber = parseInt(p, 10);
+        if (this.wsPortNumber <= 0 || this.wsPortNumber > 65535)
+            this.wsPortNumber = defaultPort;
+        this.updateBase();
         this.connect();
     }
 
@@ -103,6 +106,21 @@ export class WebsocketService {
 
     public get onWsOpen() {
         return this.wsOpenSubject;
+    }
+
+    public get port() {
+        return this.wsPortNumber;
+    }
+
+    public set port(p: number) {
+        if (p === this.wsPortNumber)
+            return;
+        if (p <= 0 || p > 65535)
+            throw new Error(`Invalid ws port ${p}`);
+        this.wsPortNumber = p;
+        this.updateBase();
+        this.socket.close();
+        this.connect();
     }
 
     public currentFile(): Promise<string> {
@@ -168,6 +186,11 @@ export class WebsocketService {
 
     public setName(sha1: string, name: string | undefined) {
         this.send("setName", undefined, { sha1: sha1, name: name });
+    }
+
+    private updateBase() {
+        const loc = window.location;
+        this.base = `ws://${loc.hostname}:${this.wsPortNumber}`;
     }
 
     private connect() {

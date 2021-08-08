@@ -14,6 +14,7 @@ export class ScrapeComponent implements OnInit, OnDestroy {
     public name?: string;
     public sha1?: string;
     public selected?: string;
+    public scraperName?: string;
     public candidates: ScrapeImage[] = [];
 
     private scraper?: ScraperService;
@@ -31,6 +32,7 @@ export class ScrapeComponent implements OnInit, OnDestroy {
 
             if (this.name !== undefined) {
                 this.scraper = getScraperService(this.ws, this.keys);
+                this.scraperName = this.scraper.name();
                 this.scraper.scrape({ name: this.name }).then(response => {
                     this.candidates = response.candidates;
                 }).catch(e => {

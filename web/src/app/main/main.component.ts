@@ -58,6 +58,10 @@ export class MainComponent implements OnInit, OnDestroy {
         return undefined;
     }
 
+    public config() {
+        this.router.navigate(['/config']);
+    }
+
     public enter(sha1: string) {
         const image = this.find(sha1);
         if (image === undefined)

@@ -11,7 +11,7 @@
   </div>
   <div *ngIf="isWsOpen && isIdeOpen" class="list">
     <div *ngFor="let image of images" class="item">
-      <div (click)="enter(image.sha1)" class="center">
+      <div (click)="enter(image.sha1)" class="center enterable">
         <div class="tcenter">
           {{ name(image.sha1) }}
         </div>
@@ -22,6 +22,15 @@
       <div class="center">
         <button *ngIf="!isSelected(image.sha1)" mat-raised-button color="primary" (click)="select(image.sha1)">Select</button>
         <button *ngIf="isSelected(image.sha1)" mat-raised-button disabled>Select</button>
+      </div>
     </div>
+    <div class="gridend">
+      <div class="right">
+        <button mat-button (click)="config()" class="config"><span class="material-icons-outlined">settings</span></button>
+      </div>
+    </div>
+  </div>
+  <div *ngIf="!isWsOpen || !isIdeOpen" class="right">
+    <button mat-button (click)="config()" class="config"><span class="material-icons-outlined">settings</span></button>
   </div>
 </div>

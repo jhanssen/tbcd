@@ -126,24 +126,23 @@ class ScraperTheGamesDbService extends ScraperService {
 
 const candidates = ["google", "thegamesdb"];
 
-export function getScraperService(ws: WebsocketService, keys: KeysService) {
-    const scraper = window.localStorage.getItem("scraper");
-    if (scraper === "thegamesdb")
-        return new ScraperTheGamesDbService(ws, keys);
-    return new ScraperGoogleService(ws, keys);
-}
-
-export function setScraperService(name: string | undefined) {
-    if (name === undefined) {
-        window.localStorage.removeItem(name);
-    } else {
-        if (candidates.indexOf(name) === -1) {
-            throw new Error(`invalid scraper ${name}`);
-        }
-        window.localStorage.setItem("scraper", name);
-    }
+export function scraperDefault() {
+    return candidates[0];
 }
 
 export function scraperCandidates() {
     return candidates;
+}
+
+export function getScraperService(ws: WebsocketService, keys: KeysService) {
+    let scraper = window.localStorage.getItem("scraper");
+    if (!scraper)
+        scraper = scraperDefault();
+    switch (scraper) {
+    case "google":
+        return new ScraperGoogleService(ws, keys);
+    case "thegamesdb":
+        return new ScraperTheGamesDbService(ws, keys);
+    }
+    throw new Error(`Unrecognized scraper ${scraper}`);
 }
