@@ -4,7 +4,7 @@ import xdg from "xdg-basedir";
 import mkdirp from "mkdirp";
 import fetch from "node-fetch";
 import { API } from "./api";
-import { convertToTga, decodeImage } from "./image";
+import { encodeTga, encodePng } from "./image";
 import { decrypt } from "./decrypt";
 import assert from "./assert";
 import fs from "fs/promises";
@@ -116,7 +116,7 @@ async function unlinkDataFile(file: string) {
                 case "setName":
                     if (typeof d.data === "object" && typeof d.data.sha1 === "string") {
                         if (typeof d.data.name === "string") {
-                            writeDataFile(`${d.data.sha1}.txt`, d.name, "utf8").then(() => {
+                            writeDataFile(`${d.data.sha1}.txt`, d.data.name, "utf8").then(() => {
                                 send("setName", id, { sha1: d.data.sha1, name: d.data.name });
                             }).catch(e => {
                                 error("setName", id, e.message);
@@ -135,15 +135,15 @@ async function unlinkDataFile(file: string) {
                 case "bitmap":
                     if (typeof d.data === "object" && typeof d.data.sha1 === "string") {
                         let fn = d.data.sha1;
-                        let decoder = "sharp";
-                        if (d.data.small === true) {
+                        if (d.data.thumbnail === true) {
+                            fn += ".thumb.png";
+                        } else if (d.data.tga === true) {
                             fn += ".tga";
-                            decoder = "tga";
+                        } else {
+                            fn += ".png";
                         }
                         readDataFile(fn).then((data: Buffer|string) => {
                             assert(typeof data !== "string", "data should be a buffer");
-                            return decodeImage(decoder, data);
-                        }).then((data: Buffer) => {
                             send("bitmap", id, { sha1: d.data.sha1, small: d.data.small, data: data.toString("base64") });
                         }).catch(e => {
                             error("bitmap", id, e.message);
@@ -158,10 +158,16 @@ async function unlinkDataFile(file: string) {
                         try {
                             const data = Buffer.from(d.data.data, "base64");
                             // const tga = new TGA(data);
-                            convertToTga(data, 100).then((buf: Buffer) => {
+                            encodeTga(data, 100).then((buf: Buffer) => {
                                 return writeDataFile(`${d.data.sha1}.tga`, buf);
                             }).then(() => {
-                                return writeDataFile(d.data.sha1, data);
+                                return encodePng(data);
+                            }).then((buf: Buffer) => {
+                                return writeDataFile(`${d.data.sha1}.png`, buf);
+                            }).then(() => {
+                                return encodePng(data, 200);
+                            }).then((buf: Buffer) => {
+                                return writeDataFile(`${d.data.sha1}.thumb.png`, buf);
                             }).then(() => {
                                 send("setBitmap", id, { sha1: d.data.sha1 });
                             }).catch(e => {

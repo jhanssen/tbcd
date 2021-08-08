@@ -1,0 +1,33 @@
+.top {
+    min-width: 100%;
+}
+
+.list {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fill, 200px);
+    grid-auto-flow: row;  /* or 'row', 'row dense', 'column dense' */
+}
+
+.item {
+    max-width: 200px;
+    max-height: 200px;
+}
+
+img {
+    max-width: 190px;
+    max-height: 190px;
+}
+
+.thumbnail {
+    max-width: 200px;
+    max-height: 200px;
+    padding: 5px;
+}
+
+.selected {
+    max-width: 200px;
+    max-height: 200px;
+    padding: 5px;
+    background-color: #a33;
+}

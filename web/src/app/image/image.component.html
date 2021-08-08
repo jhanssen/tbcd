@@ -1,6 +1,14 @@
 <div>
-  {{ name }}
+  <mat-form-field appearance="fill">
+    <mat-label>Name</mat-label>
+    <input matInput placeholder="Name" [(ngModel)]="name"/>
+  </mat-form-field>
 </div>
 <div>
+  <img [src]="imageData | sanitizeUrl" class="boxart"/>
+<div>
   <button mat-button (click)="select()">Select</button>
+  <button mat-button (click)="scrape()">Scrape</button>
+  <button mat-button (click)="save()">Save</button>
+  <button mat-button (click)="back()">Back</button>
 </div>

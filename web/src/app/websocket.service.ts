@@ -106,16 +106,16 @@ export class WebsocketService {
         });
     }
 
-    public bitmap(sha1: string, small?: boolean): Promise<string> {
+    public bitmap(sha1: string, thumbnail?: boolean): Promise<string> {
         const id = this.nextId();
         return new Promise<string>((resolve, reject) => {
-            this.currentFileReqs.push({ id, resolve, reject });
-            this.send("bitmap", id, { sha1: sha1, small: small });
+            this.bitmapReqs.push({ id, resolve, reject });
+            this.send("bitmap", id, { sha1: sha1, thumbnail: thumbnail });
         });
     }
 
-    public setBitmap(sha1: string, bitmap: ArrayBuffer | Uint8Array) {
-        const encoded = encode(bitmap);
+    public setBitmap(sha1: string, bitmap: ArrayBuffer | Uint8Array | string) {
+        const encoded: string = (typeof bitmap === "string") ? bitmap : encode(bitmap);
         this.send("setBitmap", undefined, { sha1: sha1, data: encoded });
     }
 
@@ -269,7 +269,7 @@ export class WebsocketService {
                     }
                     break;
                 default:
-                    console.error(`unhandled type ${data.type}`);
+                    console.error(`unhandled type ${data.type}`, data);
                     break;
                 }
             } catch (e) {
