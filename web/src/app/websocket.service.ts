@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Subject, ReplaySubject } from 'rxjs';
 import { encode } from './base64';
 
 export interface Image {
@@ -63,6 +63,7 @@ function discardAll<Type>(reqs: Request<PromiseResolve<Type>>[], data: Error) {
 })
 export class WebsocketService {
     private currentFileSubject = new Subject<string>();
+    private openSubject = new ReplaySubject<boolean>(1);
 
     private socket: WebSocket;
     private id: number = 0;
@@ -87,6 +88,10 @@ export class WebsocketService {
     public get onCurrentFile() {
         this.send("currentFile", undefined);
         return this.currentFileSubject;
+    }
+
+    public get onOpen() {
+        return this.openSubject;
     }
 
     public currentFile(): Promise<string> {
@@ -169,6 +174,14 @@ export class WebsocketService {
             try {
                 const data = JSON.parse(event.data);
                 switch (data.type) {
+                case "open":
+                    this.openSubject.next(true);
+                    break;
+                case "error":
+                    // fall through
+                case "close":
+                    this.openSubject.next(false);
+                    break;
                 case "currentFile":
                     if (typeof data.data === "string") {
                         if (typeof data.id === "number") {

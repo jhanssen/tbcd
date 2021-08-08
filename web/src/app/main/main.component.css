@@ -28,6 +28,10 @@
     justify-content: center;
 }
 
+.dim {
+    color: #999;
+}
+
 .center {
     margin: auto;
 }

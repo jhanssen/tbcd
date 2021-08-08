@@ -33,6 +33,11 @@ export class ImageComponent implements OnInit, OnDestroy {
             }
         });
         this.subs.push(sub);
+        sub = this.ws.onOpen.subscribe(isopen => {
+            if (!isopen)
+                this.router.navigate(["/"]);
+        });
+        this.subs.push(sub);
 
         if (this.imageData === undefined)
             this.imageData = placeholder;

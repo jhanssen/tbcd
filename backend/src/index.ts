@@ -50,11 +50,30 @@ async function unlinkDataFile(file: string) {
         process.exit(1);
     }
 
+    const apiStatus: {
+        error?: Error;
+        open: boolean;
+    } = {
+        open: false
+    };
+
     const api = new API(comPort);
+    api.on("open", () => {
+        apiStatus.open = true;
+        apiStatus.error = undefined;
+    });
+    api.on("close", () => {
+        apiStatus.open = false;
+    });
+    api.on("error", (e: Error) => {
+        apiStatus.open = false;
+        apiStatus.error = e;
+    });
+
     const wssv1 = new WebSocketServer({ port: wsPort, path: "/api/v1" });
     console.log(`listening on ws: ${wsPort}`);
     wssv1.on("connection", ws => {
-        const send = (type: string, id: number | undefined, msg: any) => {
+        const send = (type: string, id: number | undefined, msg?: any) => {
             try {
                 ws.send(JSON.stringify({ type: type, id: id, data: msg }));
             } catch (e) {
@@ -69,11 +88,35 @@ async function unlinkDataFile(file: string) {
         const currentFileSender = (file: string) => {
             send("currentFile", undefined, file);
         };
+        const openSender = () => {
+            send("open", undefined);
+        };
+        const closeSender = () => {
+            send("close", undefined);
+        };
+        const errorSender = (err: Error) => {
+            send("error", undefined, err.message);
+        };
         api.on("currentFile", currentFileSender);
+        api.on("open", openSender);
+        api.on("close", closeSender);
+        api.on("error", errorSender);
 
         ws.on("close", () => {
             api.off("currentFile", currentFileSender);
+            api.off("open", openSender);
+            api.off("close", closeSender);
+            api.off("error", errorSender);
         });
+
+        if (apiStatus.open) {
+            send("open", undefined);
+        } else {
+            if (apiStatus.error) {
+                send("error", undefined, apiStatus.error.message);
+            }
+            send("close", undefined);
+        }
 
         ws.on("message", msg => {
             // console.log("msg", msg.toString());

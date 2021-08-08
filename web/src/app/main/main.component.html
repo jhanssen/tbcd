@@ -1,5 +1,10 @@
 <div class="top">
-  <div class="list">
+  <div *ngIf="!isopen">
+    <h1 class="icenter">
+      <span class="dim">IDE device not available</span>
+    </h1>
+  </div>
+  <div *ngIf="isopen" class="list">
     <div *ngFor="let image of images" class="item">
       <div (click)="enter(image.sha1)" class="center">
         <div class="tcenter">

@@ -11,6 +11,7 @@ import { placeholder } from './placeholder';
 export class MainComponent implements OnInit, OnDestroy {
     public images: Image[] = [];
     public current?: string;
+    public isopen: boolean = false;
     private imageBitmaps: { [key: string]: string } = {};
     private imageNames: { [key: string]: string } = {};
     private subs: any[] = [];
@@ -26,6 +27,10 @@ export class MainComponent implements OnInit, OnDestroy {
         });
         let sub = this.ws.onCurrentFile.subscribe(file => {
             this.current = file;
+        });
+        this.subs.push(sub);
+        sub = this.ws.onOpen.subscribe(isopen => {
+            this.isopen = isopen;
         });
         this.subs.push(sub);
     }

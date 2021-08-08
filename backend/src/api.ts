@@ -13,6 +13,7 @@ type CurrentFileResolve = (value: string | PromiseLike<string>) => void
 type Reject = (reason?: any) => void;
 
 type CommandCheck = (data: string) => boolean;
+type Timeout = ReturnType<typeof setTimeout>;
 
 interface Command {
     cmd: string;
@@ -28,6 +29,9 @@ interface CurrentFileRequest {
     resolve: CurrentFileResolve;
     reject: Reject;
 }
+
+const initialBackoff = 500;
+const maxBackoff = 30000;
 
 export class API extends EventEmitter {
     private portName: string;
@@ -46,6 +50,8 @@ export class API extends EventEmitter {
     private pendingImages: Image[];
     private drives: string[];
     private ready: boolean;
+    private reconnectTimer?: Timeout;
+    private backoff: number = initialBackoff;
 
     constructor(portName: string) {
         super();
@@ -95,7 +101,19 @@ export class API extends EventEmitter {
         });
     }
 
-    private reconnect() {
+    private tryReconnect() {
+        if (this.reconnectTimer)
+            return;
+        this.clear();
+        this.reconnectTimer = setTimeout(() => {
+            console.log("com closed, trying to reconnect");
+            this.reconnectTimer = undefined;
+            this.reconnect();
+        }, this.backoff);
+        this.backoff = Math.min(this.backoff * 2, maxBackoff);
+    }
+
+    private clear() {
         this.imageReqs = [];
         this.currentFileReqs = [];
         this.cmds = [];
@@ -109,22 +127,35 @@ export class API extends EventEmitter {
         this.images = undefined;
         this.currentCmd = undefined;
         this.currentFile = undefined;
+    }
 
+    private reconnect() {
         this.port = new SerialPort(this.portName, {
             baudRate: 9600
+        }, (err?: Error | null) => {
+            process.nextTick(() => {
+                if (err !== undefined && err !== null) {
+                    console.error("open error", err.message);
+                    this.emit("error", err);
+                    this.tryReconnect();
+                } else {
+                    console.error("api open");
+                    this.emit("open");
+                    this.backoff = initialBackoff;
+                }
+            });
         });
         this.port.on("error", e => {
             console.error("api error", e.message);
-            setTimeout(() => {
-                console.log("com error, trying to reconnect");
-                this.reconnect();
-            }, 1000);
+            this.emit("error", e);
+            assert(this.port !== undefined, "port can't be undefined");
+            this.port.close();
+            this.tryReconnect();
         });
         this.port.on("close", () => {
-            setTimeout(() => {
-                console.log("com closed, trying to reconnect");
-                this.reconnect();
-            }, 1000);
+            console.error("api close");
+            this.emit("close");
+            this.tryReconnect();
         });
         this.port.on("data", (data: Buffer) => {
             if (this.data === undefined) {
