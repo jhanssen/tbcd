@@ -7,6 +7,8 @@ import { MainComponent } from './main/main.component';
 import { SanitizeUrlModule } from './sanitizeurl/sanitizeurl.module';
 import { ImageComponent } from './image/image.component';
 
+import { MatButtonModule } from '@angular/material/button';
+
 @NgModule({
   declarations: [
       AppComponent,
@@ -16,7 +18,8 @@ import { ImageComponent } from './image/image.component';
     imports: [
         BrowserModule,
         AppRoutingModule,
-        SanitizeUrlModule
+        SanitizeUrlModule,
+        MatButtonModule,
     ],
     providers: [],
     bootstrap: [AppComponent]
