@@ -19,7 +19,9 @@ export class MainComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.ws.images().then(imgs => {
-            this.images = imgs;
+            this.images = imgs.sort((a, b) => {
+                return a.name.localeCompare(b.name);
+            });
             this.loadImageDatas();
         });
         let sub = this.ws.onCurrentFile.subscribe(file => {

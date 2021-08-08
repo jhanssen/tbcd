@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { WebsocketService } from '../websocket.service';
 import { KeysService } from '../keys.service';
 import { getScraperService, ScraperService, ScrapeImage } from '../scraper.service';
@@ -19,7 +20,8 @@ export class ScrapeComponent implements OnInit, OnDestroy {
     private subs: any[] = [];
 
     constructor(private route: ActivatedRoute, private router: Router,
-                private ws: WebsocketService, private keys: KeysService) {
+                private ws: WebsocketService, private keys: KeysService,
+                private snackBar: MatSnackBar) {
     }
 
     ngOnInit(): void {
@@ -64,7 +66,11 @@ export class ScrapeComponent implements OnInit, OnDestroy {
             return;
         console.log("saving", this.selected);
         this.ws.fetch(this.selected).then(data => {
-            this.ws.setBitmap(this.sha1, data);
+            this.ws.setBitmap(this.sha1, data).then(() => {
+                this.snackBar.open("Saved", "Set Bitmap", { duration: 5000 });
+            }).catch(e => {
+                this.snackBar.open(`Failure ${e.message}`, "Set Bitmap", { duration: 5000 });
+            });
         }).catch(e => {
             console.error("error fetching", e);
         });

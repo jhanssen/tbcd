@@ -19,12 +19,16 @@
     border: 2px solid #555;
 }
 
-.vcenter {
+.tcenter {
     text-align: center;
 }
 
+.icenter {
+    display: flex;
+    justify-content: center;
+}
+
 .center {
-    display: block;
     margin: auto;
 }
 

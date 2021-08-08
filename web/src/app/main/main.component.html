@@ -2,10 +2,10 @@
   <div class="list">
     <div *ngFor="let image of images" class="item">
       <div (click)="enter(image.sha1)" class="center">
-        <div class="vcenter">
+        <div class="tcenter">
           {{ name(image.sha1) }}
         </div>
-        <div class="center">
+        <div class="icenter">
           <img [src]="imageData(image.sha1) | sanitizeUrl" class="boxart"/>
         </div>
       </div>

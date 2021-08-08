@@ -8,6 +8,7 @@ export interface Image {
 }
 
 type PromiseResolve<Type> = (value: Type | PromiseLike<Type>) => void;
+type VoidResolve = PromiseResolve<void>;
 type StringResolve = PromiseResolve<string>;
 type ImageResolve = PromiseResolve<Image[]>;
 type Reject = (reason?: any) => void;
@@ -21,6 +22,7 @@ interface Request<ResolveType> {
 type ImageRequest = Request<ImageResolve>;
 type CurrentFileRequest = Request<StringResolve>;
 type BitmapRequest = Request<StringResolve>;
+type SetBitmapRequest = Request<VoidResolve>;
 type DecryptRequest = Request<StringResolve>;
 type FetchRequest = Request<StringResolve>;
 type NameRequest = Request<StringResolve>;
@@ -67,6 +69,7 @@ export class WebsocketService {
     private imageReqs: ImageRequest[] = [];
     private currentFileReqs: CurrentFileRequest[] = [];
     private bitmapReqs: BitmapRequest[] = [];
+    private setBitmapReqs: SetBitmapRequest[] = [];
     private decryptReqs: DecryptRequest[] = [];
     private fetchReqs: FetchRequest[] = [];
     private nameReqs: NameRequest[] = [];
@@ -114,9 +117,13 @@ export class WebsocketService {
         });
     }
 
-    public setBitmap(sha1: string, bitmap: ArrayBuffer | Uint8Array | string) {
-        const encoded: string = (typeof bitmap === "string") ? bitmap : encode(bitmap);
-        this.send("setBitmap", undefined, { sha1: sha1, data: encoded });
+    public setBitmap(sha1: string, bitmap: ArrayBuffer | Uint8Array | string): Promise<void> {
+        const id = this.nextId();
+        return new Promise<void>((resolve, reject) => {
+            this.setBitmapReqs.push({ id, resolve, reject });
+            const encoded: string = (typeof bitmap === "string") ? bitmap : encode(bitmap);
+            this.send("setBitmap", id, { sha1: sha1, data: encoded });
+        });
     }
 
     public decrypt(data: string): Promise<string> {
@@ -195,6 +202,13 @@ export class WebsocketService {
                         console.error("no data for bitmap");
                     }
                     break;
+                case "setBitmap":
+                    if (typeof data.id === "number") {
+                        dispatch<void>(data.id, undefined, this.setBitmapReqs);
+                    } else {
+                        console.error("no id for setBitmap response");
+                    }
+                    break;
                 case "decrypt":
                     if (typeof data.data === "object" && typeof data.data.data === "string") {
                         if (typeof data.id === "number") {
@@ -245,6 +259,10 @@ export class WebsocketService {
                                 handled = true;
                                 discard<string>(data.id, data.data.error, this.bitmapReqs);
                                 break;
+                            case "setBitmap":
+                                handled = true;
+                                discard<void>(data.id, data.data.error, this.setBitmapReqs);
+                                break;
                             case "decrypt":
                                 handled = true;
                                 discard<string>(data.id, data.data.error, this.decryptReqs);
@@ -284,6 +302,7 @@ export class WebsocketService {
             discardAll<string>(this.decryptReqs, e);
             discardAll<string>(this.fetchReqs, e);
             discardAll<string>(this.nameReqs, e);
+            discardAll<void>(this.setBitmapReqs, e);
 
             // try to reconnect
             setTimeout(() => { this.connect(); }, 1000);
