@@ -1,0 +1,29 @@
+.list {
+    display: grid;
+    gap: 10px;
+    width: 1000px;
+    grid-template: repeat(4, 1fr) / repeat(2, 1fr);
+    grid-auto-flow: column;  /* or 'row', 'row dense', 'column dense' */
+}
+
+.item {
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+    min-height: 300px;
+    border: 2px solid #555;
+}
+
+.vcenter {
+    text-align: center;
+}
+
+.center {
+    display: block;
+    margin: auto;
+}
+
+.boxart {
+    max-width: 100px;
+    max-height: 100px;
+}

@@ -1,4 +1,10 @@
-<div *ngFor="let image of images" class="list">
-  {{ name(image.name) }}
-  <img [src]="imageData(image.sha1) | sanitizeUrl" width="400" height="400"/>
+<div class="list">
+  <div *ngFor="let image of images" class="item" (click)="select(image.sha1)">
+    <div class="vcenter">
+      {{ name(image.name) }}
+    </div>
+    <div class="center">
+      <img [src]="imageData(image.sha1) | sanitizeUrl" class="boxart"/>
+    </div>
+  </div>
 </div>

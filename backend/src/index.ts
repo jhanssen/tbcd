@@ -26,14 +26,19 @@ if (typeof writeDir !== "string" || writeDir.indexOf("/tbcd") === 0) {
     process.exit(1);
 }
 
-async function writeDataFile(file: string, data: Buffer) {
+async function writeDataFile(file: string, data: Buffer|string, encoding?: BufferEncoding) {
     assert(typeof writeDir === "string", "writeDir must be string");
-    await fs.writeFile(path.join(writeDir, file), data);
+    await fs.writeFile(path.join(writeDir, file), data, { encoding: encoding ? encoding : null });
 }
 
-async function readDataFile(file: string) {
+async function readDataFile(file: string, encoding?: BufferEncoding) {
     assert(typeof writeDir === "string", "writeDir must be string");
-    return await fs.readFile(path.join(writeDir, file));
+    return await fs.readFile(path.join(writeDir, file), { encoding: encoding ? encoding : null });
+}
+
+async function unlinkDataFile(file: string) {
+    assert(typeof writeDir === "string", "writeDir must be string");
+    await fs.unlink(path.join(writeDir, file));
 }
 
 (async function() {
@@ -61,8 +66,13 @@ async function readDataFile(file: string) {
             send("error", id, { "errorType": type, "error": err });
         };
 
-        api.on("currentFile", (file: string) => {
+        const currentFileSender = (file: string) => {
             send("currentFile", undefined, file);
+        };
+        api.on("currentFile", currentFileSender);
+
+        ws.on("close", () => {
+            api.off("currentFile", currentFileSender);
         });
 
         ws.on("message", msg => {
@@ -85,24 +95,56 @@ async function readDataFile(file: string) {
                     }).catch(e => { throw e; });
                     break;
                 case "setCurrentFile":
-                    if (typeof d.file === "string") {
-                        api.selectFile(d.file);
+                    if (typeof d.data === "object" && typeof d.data.file === "string") {
+                        api.selectFile(d.data.file);
                     } else {
                         error("setCurrentFile", id, "need a file parameter");
                     }
                     break;
+                case "name":
+                    if (typeof d.data === "object" && typeof d.data.sha1 === "string") {
+                        readDataFile(`${d.data.sha1}.txt`, "utf8").then((data: Buffer|string) => {
+                            assert(typeof data === "string", "data must be a string");
+                            send("name", id, data);
+                        }).catch(e => {
+                            error("name", id, e.message);
+                        });
+                    } else {
+                        error("name", id, "need a sha1 parameter");
+                    }
+                    break;
+                case "setName":
+                    if (typeof d.data === "object" && typeof d.data.sha1 === "string") {
+                        if (typeof d.data.name === "string") {
+                            writeDataFile(`${d.data.sha1}.txt`, d.name, "utf8").then(() => {
+                                send("setName", id, { sha1: d.data.sha1, name: d.data.name });
+                            }).catch(e => {
+                                error("setName", id, e.message);
+                            });
+                        } else {
+                            unlinkDataFile(`${d.data.sha1}.txt`).then(() => {
+                                send("setName", id, { sha1: d.data.sha1 });
+                            }).catch(e => {
+                                error("setName", id, e.message);
+                            });
+                        }
+                    } else {
+                        error("setName", id, "need a sha1 and name parameter");
+                    }
+                    break;
                 case "bitmap":
-                    if (typeof d.sha1 === "string") {
-                        let fn = d.sha1;
+                    if (typeof d.data === "object" && typeof d.data.sha1 === "string") {
+                        let fn = d.data.sha1;
                         let decoder = "sharp";
-                        if (d.small === true) {
+                        if (d.data.small === true) {
                             fn += ".tga";
                             decoder = "tga";
                         }
-                        readDataFile(fn).then((data: Buffer) => {
+                        readDataFile(fn).then((data: Buffer|string) => {
+                            assert(typeof data !== "string", "data should be a buffer");
                             return decodeImage(decoder, data);
                         }).then((data: Buffer) => {
-                            send("bitmap", id, { sha1: d.sha1, small: d.small, data: data.toString("base64") });
+                            send("bitmap", id, { sha1: d.data.sha1, small: d.data.small, data: data.toString("base64") });
                         }).catch(e => {
                             error("bitmap", id, e.message);
                         });
@@ -111,17 +153,17 @@ async function readDataFile(file: string) {
                     }
                     break;
                 case "setBitmap":
-                    if (typeof d.sha1 === "string" && typeof d.data === "string") {
+                    if (typeof d.data === "object" && typeof d.data.sha1 === "string" && typeof d.data.data === "string") {
                         // first, base64 decode data
                         try {
-                            const data = Buffer.from(d.data, "base64");
+                            const data = Buffer.from(d.data.data, "base64");
                             // const tga = new TGA(data);
                             convertToTga(data, 100).then((buf: Buffer) => {
-                                return writeDataFile(`${d.sha1}.tga`, buf);
+                                return writeDataFile(`${d.data.sha1}.tga`, buf);
                             }).then(() => {
-                                return writeDataFile(d.sha1, data);
+                                return writeDataFile(d.data.sha1, data);
                             }).then(() => {
-                                send("setBitmap", id, { sha1: d.sha1 });
+                                send("setBitmap", id, { sha1: d.data.sha1 });
                             }).catch(e => {
                                 throw e;
                             });
@@ -133,9 +175,9 @@ async function readDataFile(file: string) {
                     }
                     break;
                 case "decrypt":
-                    if (typeof d.data === "string") {
+                    if (typeof d.data === "object" && typeof d.data.data === "string") {
                         try {
-                            const decrypted = decrypt(d.data);
+                            const decrypted = decrypt(d.data.data);
                             send("decrypt", id, { data: decrypted });
                         } catch (e) {
                             error("decrypt", id, e.message);
@@ -145,11 +187,11 @@ async function readDataFile(file: string) {
                     }
                     break;
                 case "fetch":
-                    if (typeof d.url === "string") {
-                        fetch(d.url).then(data => {
+                    if (typeof d.data === "object" && typeof d.data.url === "string") {
+                        fetch(d.data.url).then(data => {
                             return data.arrayBuffer();
                         }).then(data => {
-                            send("fetch", id, Buffer.from(data).toString(d.encoding || "base64"));
+                            send("fetch", id, Buffer.from(data).toString(d.data.encoding || "base64"));
                         }).catch(e => {
                             error("fetch", id, e.message);
                         });

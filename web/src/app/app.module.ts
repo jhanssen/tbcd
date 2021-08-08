@@ -5,11 +5,13 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { MainComponent } from './main/main.component';
 import { SanitizeUrlModule } from './sanitizeurl/sanitizeurl.module';
+import { ImageComponent } from './image/image.component';
 
 @NgModule({
   declarations: [
       AppComponent,
-      MainComponent
+      MainComponent,
+      ImageComponent
   ],
     imports: [
         BrowserModule,

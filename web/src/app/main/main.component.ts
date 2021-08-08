@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { WebsocketService, Image } from '../websocket.service';
 import { placeholder } from './placeholder';
 
@@ -13,7 +14,7 @@ export class MainComponent implements OnInit, OnDestroy {
     private imageDatas: { [key: string]: string } = {};
     private subs: any[] = [];
 
-    constructor(private ws: WebsocketService) { }
+    constructor(private ws: WebsocketService, private router: Router) { }
 
     ngOnInit(): void {
         this.ws.images().then(imgs => {
@@ -36,6 +37,13 @@ export class MainComponent implements OnInit, OnDestroy {
         this.imageDatas = {};
     }
 
+    public select(sha1: string) {
+        const image = this.find(sha1);
+        if (image === undefined)
+            return;
+        this.router.navigate(['/image', image.name, this.name(image.name), sha1]);
+    }
+
     public name(file: string) {
         let n = file;
         const slash = n.lastIndexOf("/");
@@ -52,6 +60,14 @@ export class MainComponent implements OnInit, OnDestroy {
             return this.imageDatas[sha1];
         }
         return placeholder;
+    }
+
+    private find(sha1: string): Image | undefined {
+        for (const img of this.images) {
+            if (img.sha1 === sha1)
+                return img;
+        }
+        return undefined;
     }
 
     private loadImageDatas() {

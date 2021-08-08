@@ -23,6 +23,7 @@ type CurrentFileRequest = Request<StringResolve>;
 type BitmapRequest = Request<StringResolve>;
 type DecryptRequest = Request<StringResolve>;
 type FetchRequest = Request<StringResolve>;
+type NameRequest = Request<StringResolve>;
 
 function dispatch<Type>(id: number, data: Type, reqs: Request<PromiseResolve<Type>>[]) {
     for (let idx = 0; idx < reqs.length; ++idx) {
@@ -68,6 +69,7 @@ export class WebsocketService {
     private bitmapReqs: BitmapRequest[] = [];
     private decryptReqs: DecryptRequest[] = [];
     private fetchReqs: FetchRequest[] = [];
+    private nameReqs: NameRequest[] = [];
     private pendingSends?: string[];
     private base: string;
 
@@ -133,6 +135,18 @@ export class WebsocketService {
         });
     }
 
+    public name(sha1: string): Promise<string> {
+        const id = this.nextId();
+        return new Promise<string>((resolve, reject) => {
+            this.nameReqs.push({ id, resolve, reject });
+            this.send("name", id, { sha1: sha1 });
+        });
+    }
+
+    public setName(sha1: string, name: string | undefined) {
+        this.send("setName", undefined, { sha1: sha1, name: name });
+    }
+
     private connect() {
         console.log(`trying to connect to ${this.base}/api/v1`);
 
@@ -182,9 +196,9 @@ export class WebsocketService {
                     }
                     break;
                 case "decrypt":
-                    if (typeof data.data === "string") {
+                    if (typeof data.data === "object" && typeof data.data.data === "string") {
                         if (typeof data.id === "number") {
-                            dispatch<string>(data.id, data.data, this.decryptReqs);
+                            dispatch<string>(data.id, data.data.data, this.decryptReqs);
                         } else {
                             console.error("no id for decrypt response");
                         }
@@ -201,6 +215,17 @@ export class WebsocketService {
                         }
                     } else {
                         console.error("no data for fetch");
+                    }
+                    break;
+                case "name":
+                    if (typeof data.data === "string") {
+                        if (typeof data.id === "number") {
+                            dispatch<string>(data.id, data.data, this.nameReqs);
+                        } else {
+                            console.error("no id for name response");
+                        }
+                    } else {
+                        console.error("no data for name");
                     }
                     break;
                 case "error":
@@ -228,6 +253,10 @@ export class WebsocketService {
                                 handled = true;
                                 discard<string>(data.id, data.data.error, this.fetchReqs);
                                 break;
+                            case "name":
+                                handled = true;
+                                discard<string>(data.id, data.data.error, this.nameReqs);
+                                break;
                             }
                         }
                     }
@@ -254,6 +283,7 @@ export class WebsocketService {
             discardAll<string>(this.bitmapReqs, e);
             discardAll<string>(this.decryptReqs, e);
             discardAll<string>(this.fetchReqs, e);
+            discardAll<string>(this.nameReqs, e);
 
             // try to reconnect
             setTimeout(() => { this.connect(); }, 1000);

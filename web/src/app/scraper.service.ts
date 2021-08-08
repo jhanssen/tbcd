@@ -33,7 +33,7 @@ class ScraperGoogleService extends ScraperService {
             this.keys.keys().then(keys => {
                 if (keys.google === undefined)
                     throw new Error("no google key");
-                const query = `q=${encodeURIComponent(request.name + " saturn cover")}&searchType=image&cx=${keys.google.cx}&key=${keys.google.key}`;
+                const query = `q=${encodeURIComponent(request.name + " box art")}&searchType=image&cx=${keys.google.cx}&key=${keys.google.key}`;
                 const url = `https://www.googleapis.com/customsearch/v1?${query}`;
                 fetch(url).then(data => data.json()).then(data => {
                     // console.log(data);
