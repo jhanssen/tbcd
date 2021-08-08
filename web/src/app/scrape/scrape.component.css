@@ -34,6 +34,10 @@ img {
     background-color: #a33;
 }
 
+.mat-white-bg {
+    background-color: #fff;
+}
+
 .height {
     display: flex;
     flex-direction: column;
