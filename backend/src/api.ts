@@ -106,7 +106,6 @@ export class API extends EventEmitter {
             return;
         this.clear();
         this.reconnectTimer = setTimeout(() => {
-            console.log("com closed, trying to reconnect");
             this.reconnectTimer = undefined;
             this.reconnect();
         }, this.backoff);
