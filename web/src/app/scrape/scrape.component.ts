@@ -39,7 +39,12 @@ export class ScrapeComponent implements OnInit, OnDestroy {
             }
         });
         this.subs.push(sub);
-        sub = this.ws.onOpen.subscribe(isopen => {
+        sub = this.ws.onIdeOpen.subscribe(isopen => {
+            if (!isopen)
+                this.router.navigate(["/"]);
+        });
+        this.subs.push(sub);
+        sub = this.ws.onWsOpen.subscribe(isopen => {
             if (!isopen)
                 this.router.navigate(["/"]);
         });

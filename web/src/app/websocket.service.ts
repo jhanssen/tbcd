@@ -7,6 +7,7 @@ export interface Image {
     sha1: string;
 }
 
+type Timeout = ReturnType<typeof setTimeout>;
 type PromiseResolve<Type> = (value: Type | PromiseLike<Type>) => void;
 type VoidResolve = PromiseResolve<void>;
 type StringResolve = PromiseResolve<string>;
@@ -26,6 +27,9 @@ type SetBitmapRequest = Request<VoidResolve>;
 type DecryptRequest = Request<StringResolve>;
 type FetchRequest = Request<StringResolve>;
 type NameRequest = Request<StringResolve>;
+
+const initialBackoff = 500;
+const maxBackoff = 30000;
 
 function dispatch<Type>(id: number, data: Type, reqs: Request<PromiseResolve<Type>>[]) {
     for (let idx = 0; idx < reqs.length; ++idx) {
@@ -63,7 +67,8 @@ function discardAll<Type>(reqs: Request<PromiseResolve<Type>>[], data: Error) {
 })
 export class WebsocketService {
     private currentFileSubject = new Subject<string>();
-    private openSubject = new ReplaySubject<boolean>(1);
+    private ideOpenSubject = new ReplaySubject<boolean>(1);
+    private wsOpenSubject = new ReplaySubject<boolean>(1);
 
     private socket: WebSocket;
     private id: number = 0;
@@ -76,6 +81,8 @@ export class WebsocketService {
     private nameReqs: NameRequest[] = [];
     private pendingSends?: string[];
     private base: string;
+    private reconnectTimer?: Timeout;
+    private backoff: number = initialBackoff;
 
     constructor() {
         const loc = window.location;
@@ -90,8 +97,12 @@ export class WebsocketService {
         return this.currentFileSubject;
     }
 
-    public get onOpen() {
-        return this.openSubject;
+    public get onIdeOpen() {
+        return this.ideOpenSubject;
+    }
+
+    public get onWsOpen() {
+        return this.wsOpenSubject;
     }
 
     public currentFile(): Promise<string> {
@@ -175,12 +186,12 @@ export class WebsocketService {
                 const data = JSON.parse(event.data);
                 switch (data.type) {
                 case "open":
-                    this.openSubject.next(true);
+                    this.ideOpenSubject.next(true);
                     break;
                 case "error":
                     // fall through
                 case "close":
-                    this.openSubject.next(false);
+                    this.ideOpenSubject.next(false);
                     break;
                 case "currentFile":
                     if (typeof data.data === "string") {
@@ -307,18 +318,15 @@ export class WebsocketService {
                 console.error("unable to parse event data", event.data);
             }
         };
+        this.socket.onerror = () => {
+            this.clear();
+            this.reconnect();
+            this.wsOpenSubject.next(false);
+        };
         this.socket.onclose = () => {
-            const e = new Error("socket closed");
-            discardAll<Image[]>(this.imageReqs, e);
-            discardAll<string>(this.currentFileReqs, e);
-            discardAll<string>(this.bitmapReqs, e);
-            discardAll<string>(this.decryptReqs, e);
-            discardAll<string>(this.fetchReqs, e);
-            discardAll<string>(this.nameReqs, e);
-            discardAll<void>(this.setBitmapReqs, e);
-
-            // try to reconnect
-            setTimeout(() => { this.connect(); }, 1000);
+            this.clear();
+            this.reconnect();
+            this.wsOpenSubject.next(false);
         };
         this.socket.onopen = () => {
             if (this.pendingSends) {
@@ -327,7 +335,31 @@ export class WebsocketService {
                 }
                 this.pendingSends = undefined;
             }
+            this.backoff = initialBackoff;
+            this.wsOpenSubject.next(true);
         };
+    }
+
+    private clear() {
+        const e = new Error("socket closed");
+        discardAll<Image[]>(this.imageReqs, e);
+        discardAll<string>(this.currentFileReqs, e);
+        discardAll<string>(this.bitmapReqs, e);
+        discardAll<string>(this.decryptReqs, e);
+        discardAll<string>(this.fetchReqs, e);
+        discardAll<string>(this.nameReqs, e);
+        discardAll<void>(this.setBitmapReqs, e);
+    }
+
+    private reconnect() {
+        if (this.reconnectTimer)
+            return;
+        // try to reconnect
+        this.reconnectTimer = setTimeout(() => {
+            this.reconnectTimer = undefined;
+            this.connect();
+        }, this.backoff);
+        this.backoff = Math.min(this.backoff * 2, maxBackoff);
     }
 
     private nextId() {
