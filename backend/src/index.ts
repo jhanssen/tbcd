@@ -2,8 +2,10 @@ import Options from "@jhanssen/options";
 import WebSocket from "ws";
 import xdg from "xdg-basedir";
 import mkdirp from "mkdirp";
+import fetch from "node-fetch";
 import { API } from "./api";
-import { convertToTga } from "./image";
+import { convertToTga, decodeImage } from "./image";
+import { decrypt } from "./decrypt";
 import assert from "./assert";
 import fs from "fs/promises";
 import path from "path";
@@ -47,60 +49,68 @@ async function readDataFile(file: string) {
     const wssv1 = new WebSocketServer({ port: wsPort, path: "/api/v1" });
     console.log(`listening on ws: ${wsPort}`);
     wssv1.on("connection", ws => {
-        const send = (type: string, msg: any) => {
+        const send = (type: string, id: number | undefined, msg: any) => {
             try {
-                ws.send(JSON.stringify({ type: type, data: msg }));
+                ws.send(JSON.stringify({ type: type, id: id, data: msg }));
             } catch (e) {
                 console.error("send error", type, e);
             }
         };
 
-        const error = (type: string, err: string) => {
-            send("error", { "errorType": type, "error": err });
+        const error = (type: string, id: number | undefined, err: string) => {
+            send("error", id, { "errorType": type, "error": err });
         };
 
         api.on("currentFile", (file: string) => {
-            send("currentFile", file);
+            send("currentFile", undefined, file);
         });
 
         ws.on("message", msg => {
             // console.log("msg", msg.toString());
             try {
                 const d = JSON.parse(msg.toString());
+                const id = d.id;
+                if (typeof id !== "number" && id !== undefined) {
+                    throw new Error(`invalid id: ${typeof id}`);
+                }
                 switch (d.type) {
                 case "images":
                     api.getImages().then(imgs => {
-                        send("images", imgs);
+                        send("images", id, imgs);
                     }).catch(e => { throw e; });
                     break;
                 case "currentFile":
                     api.getCurrentFile().then(file => {
-                        send("currentFile", file);
+                        send("currentFile", id, file);
                     }).catch(e => { throw e; });
                     break;
                 case "setCurrentFile":
                     if (typeof d.file === "string") {
                         api.selectFile(d.file);
                     } else {
-                        error("setCurrentFile", "need a file parameter");
+                        error("setCurrentFile", id, "need a file parameter");
                     }
                     break;
-                case "image":
+                case "bitmap":
                     if (typeof d.sha1 === "string") {
                         let fn = d.sha1;
+                        let decoder = "sharp";
                         if (d.small === true) {
                             fn += ".tga";
+                            decoder = "tga";
                         }
                         readDataFile(fn).then((data: Buffer) => {
-                            send("image", { sha1: d.sha1, small: d.small, data: data.toString("base64") });
+                            return decodeImage(decoder, data);
+                        }).then((data: Buffer) => {
+                            send("bitmap", id, { sha1: d.sha1, small: d.small, data: data.toString("base64") });
                         }).catch(e => {
-                            error("image", e.message);
+                            error("bitmap", id, e.message);
                         });
                     } else {
-                        error("image", "need a sha1 parameter");
+                        error("bitmap", id, "need a sha1 parameter");
                     }
                     break;
-                case "setImage":
+                case "setBitmap":
                     if (typeof d.sha1 === "string" && typeof d.data === "string") {
                         // first, base64 decode data
                         try {
@@ -111,20 +121,46 @@ async function readDataFile(file: string) {
                             }).then(() => {
                                 return writeDataFile(d.sha1, data);
                             }).then(() => {
-                                send("setImage", { sha1: d.sha1 });
+                                send("setBitmap", id, { sha1: d.sha1 });
                             }).catch(e => {
                                 throw e;
                             });
                         } catch (e) {
-                            error("setImage", e.message);
+                            error("setBitmap", id, e.message);
                         }
                     } else {
-                        error("setImage", "need a sha1 and data parameter");
+                        error("setBitmap", id, "need a sha1 and data parameter");
                     }
+                    break;
+                case "decrypt":
+                    if (typeof d.data === "string") {
+                        try {
+                            const decrypted = decrypt(d.data);
+                            send("decrypt", id, { data: decrypted });
+                        } catch (e) {
+                            error("decrypt", id, e.message);
+                        }
+                    } else {
+                        error("decrypt", id, "need a data parameter");
+                    }
+                    break;
+                case "fetch":
+                    if (typeof d.url === "string") {
+                        fetch(d.url).then(data => {
+                            return data.arrayBuffer();
+                        }).then(data => {
+                            send("fetch", id, Buffer.from(data).toString(d.encoding || "base64"));
+                        }).catch(e => {
+                            error("fetch", id, e.message);
+                        });
+                    } else {
+                        error("fetch", id, "need an url parameter");
+                    }
+                    break;
                 }
             } catch (e) {
                 console.error("message error", e);
-                error("message", e.message);
+                error("message", undefined, e.message);
             }
         });
     });

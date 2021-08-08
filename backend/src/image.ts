@@ -53,3 +53,43 @@ export function convertToTga(buffer: Buffer, bounds: number) {
             });
     });
 }
+
+export function decodeImage(decoder: string, data: Buffer): Promise<Buffer> {
+    return new Promise<Buffer>((resolve, reject) => {
+        switch (decoder) {
+        case "tga":
+            const tga = new TGA(data);
+            if (tga.pixels === undefined || tga.width === undefined || tga.height === undefined || tga.bytesPerPixel === undefined) {
+                reject(new Error("tga decode error"));
+                return;
+            }
+            sharp(Buffer.from(tga.pixels.buffer), { raw: {
+                width: tga.width,
+                height: tga.height,
+                channels: 4
+            } })
+                .png()
+                .toBuffer()
+                .then((data: Buffer) => {
+                    resolve(data);
+                }).catch(e => {
+                    reject(e);
+                });
+            break;
+        case "sharp":
+            const image = sharp(data);
+            image
+                .png()
+                .toBuffer()
+                .then((data: Buffer) => {
+                    resolve(data);
+                }).catch(e => {
+                    reject(e);
+                });
+            break;
+        default:
+            reject(new Error(`unknown decoder ${decoder}`));
+            break;
+        }
+    });
+}

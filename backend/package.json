@@ -44,6 +44,7 @@
   "devDependencies": {
     "@ava/typescript": "^1.1.1",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
+    "@types/node-fetch": "^2.5.12",
     "@types/serialport": "^8.0.2",
     "@types/sharp": "^0.28.5",
     "@types/ws": "^7.4.7",
@@ -107,6 +108,7 @@
     "@jhanssen/options": "^1.0.29",
     "@types/mkdirp": "^1.0.2",
     "mkdirp": "^1.0.4",
+    "node-fetch": "^2.6.1",
     "serialport": "^9.2.0",
     "sharp": "^0.28.3",
     "tga": "^1.0.4",
