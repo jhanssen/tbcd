@@ -8,6 +8,7 @@ export interface Image {
 }
 
 type Timeout = ReturnType<typeof setTimeout>;
+type Interval = ReturnType<typeof setInterval>;
 type PromiseResolve<Type> = (value: Type | PromiseLike<Type>) => void;
 type VoidResolve = PromiseResolve<void>;
 type StringResolve = PromiseResolve<string>;
@@ -85,12 +86,15 @@ export class WebsocketService {
     private base: string;
     private reconnectTimer?: Timeout;
     private backoff: number = initialBackoff;
+    private pingReceived: boolean;
+    private pingInterval?: Interval;
 
     constructor() {
         const p = window.localStorage.getItem("wsport") || (defaultPort + "");
         this.wsPortNumber = parseInt(p, 10);
         if (this.wsPortNumber <= 0 || this.wsPortNumber > 65535)
             this.wsPortNumber = defaultPort;
+        this.pingReceived = false;
         this.updateBase();
         this.connect();
     }
@@ -289,6 +293,16 @@ export class WebsocketService {
                         console.error("no data for name");
                     }
                     break;
+                case "ping":
+                    this.send("pong", undefined);
+                    this.pingReceived = true;
+                    break;
+                case "initialize":
+                    if (typeof data.data === "object" && typeof data.data.wsPingInterval === "number") {
+                        console.log("starting ping interval");
+                        this.pingInterval = setInterval(() => { this.checkPing() }, data.data.wsPingInterval + 30000);
+                    }
+                    break;
                 case "error":
                     let handled = false;
                     if (typeof data.id === "number") {
@@ -363,6 +377,18 @@ export class WebsocketService {
         };
     }
 
+    private checkPing() {
+        if (!this.pingReceived) {
+            // assume host dead
+            this.socket.close();
+            this.ideOpenSubject.next(false);
+            this.wsOpenSubject.next(false);
+            this.clear();
+            this.reconnect();
+        }
+        this.pingReceived = false;
+    }
+
     private clear() {
         const e = new Error("socket closed");
         discardAll<Image[]>(this.imageReqs, e);
@@ -372,6 +398,17 @@ export class WebsocketService {
         discardAll<string>(this.fetchReqs, e);
         discardAll<string>(this.nameReqs, e);
         discardAll<void>(this.setBitmapReqs, e);
+
+        // unset handlers to be safe
+        this.socket.onopen = undefined;
+        this.socket.onclose = undefined;
+        this.socket.onerror = undefined;
+        this.socket.onmessage = undefined;
+
+        if (this.pingInterval) {
+            clearInterval(this.pingInterval);
+            this.pingInterval = undefined;
+        }
     }
 
     private reconnect() {

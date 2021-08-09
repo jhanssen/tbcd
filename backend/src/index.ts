@@ -163,6 +163,9 @@ interface Ping {
             removePing(ws);
         });
 
+        // send an initialize message
+        send("initialize", undefined, { wsPingInterval });
+
         if (apiStatus.open) {
             send("open", undefined);
         } else {
