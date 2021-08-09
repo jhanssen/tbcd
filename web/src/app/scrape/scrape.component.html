@@ -18,7 +18,7 @@
           <div class="tcenter">
             {{ imageSize(sc) }}
           </div>
-          <div [class]="isSelected(candidate.image) ? 'selected' : 'thumbnail'" (click)="select(candidate.image)">
+          <div [class]="isSelected(candidate.image) ? 'selected dcenter' : 'thumbnail dcenter'" (click)="select(candidate.image)">
             <img [src]="candidate.image"/>
           </div>
         </div>
