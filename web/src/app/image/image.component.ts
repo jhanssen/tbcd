@@ -1,7 +1,27 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { WebsocketService } from '../websocket.service';
 import { placeholder } from '../main/placeholder';
+
+export interface ImageUploadDialogData {
+    sha1: string;
+}
+
+@Component({
+    selector: 'app-image-upload-dialog',
+    templateUrl: './image.upload.component.html',
+    styleUrls: ['./image.upload.component.css']
+})
+export class ImageUploadComponent {
+    constructor(@Inject(MAT_DIALOG_DATA) private data: ImageUploadDialogData,
+                private dialogRef: MatDialogRef<ImageUploadComponent>) { }
+
+    public uploadChange(event: any) {
+        this.dialogRef.close({ file: event.target.files[0] });
+    }
+}
 
 @Component({
     selector: 'app-image',
@@ -17,7 +37,8 @@ export class ImageComponent implements OnInit, OnDestroy {
     private subs: any[] = [];
 
     constructor(private route: ActivatedRoute, private router: Router,
-                private ws: WebsocketService) { }
+                private ws: WebsocketService, private dialog: MatDialog,
+                private snackBar: MatSnackBar) { }
 
     ngOnInit(): void {
         let sub = this.route.params.subscribe(params => {
@@ -27,11 +48,7 @@ export class ImageComponent implements OnInit, OnDestroy {
             this.modified = false;
 
             if (this.sha1 !== undefined) {
-                this.ws.bitmap(this.sha1).then(data => {
-                    this.imageData = data;
-                }).catch(e => {
-                    console.error("bitmap error", e);
-                });
+                this.fetchBitmap();
             }
         });
         this.subs.push(sub);
@@ -65,6 +82,56 @@ export class ImageComponent implements OnInit, OnDestroy {
         this.router.navigate(["/"]);
     }
 
+    public upload() {
+        if (this.sha1 === undefined)
+            return;
+        const dialogRef = this.dialog.open(ImageUploadComponent, {
+            data: {
+                sha1: this.sha1
+            }
+        });
+        dialogRef.afterClosed().subscribe(result => {
+            if (result === undefined || !result.file)
+                return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                // console.log("file", reader.result);
+                // do some sanity checking
+                if (typeof reader.result !== "string") {
+                    // can't happen?
+                    return;
+                }
+                const brx = /^data:([^;]+);base64,/;
+                const bd = brx.exec(reader.result);
+                if (!bd) {
+                    this.snackBar.open("Invalid upload", "Upload boxart", { duration: 5000 });
+                    return;
+                }
+                // check for allowed image types
+                switch (bd[1]) {
+                case "image/jpeg":
+                case "image/png":
+                case "image/webp":
+                case "image/tiff":
+                case "image/gif":
+                case "image/bmp":
+                    const base64str = reader.result.substr(bd[0].length);
+                    this.ws.setBitmap(this.sha1, base64str).then(() => {
+                        this.snackBar.open("Uploaded", "Upload boxart", { duration: 5000 });
+                        this.fetchBitmap();
+                    }).catch(e => {
+                        this.snackBar.open(`Failure ${e.message}`, "Upload boxart", { duration: 5000 });
+                    });
+                    break;
+                default:
+                    this.snackBar.open(`Unsupported image type: ${bd[1]}`, "Upload boxart", { duration: 5000 });
+                    break;
+                }
+            };
+            reader.readAsDataURL(result.file);
+        });
+    }
+
     public setName(event: InputEvent) {
         const newname = (event.target as HTMLInputElement).value;
         if (newname !== this.name) {
@@ -86,5 +153,13 @@ export class ImageComponent implements OnInit, OnDestroy {
         } else {
             console.error("no file");
         }
+    }
+
+    private fetchBitmap() {
+        this.ws.bitmap(this.sha1).then(data => {
+            this.imageData = data;
+        }).catch(e => {
+            console.error("bitmap error", e);
+        });
     }
 }
