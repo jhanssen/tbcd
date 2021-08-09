@@ -9,7 +9,7 @@
   <div class="topspace">
     <mat-form-field appearance="fill">
       <mat-label>Name</mat-label>
-      <input matInput placeholder="Name" [(ngModel)]="name"/>
+      <input matInput placeholder="Name" [ngModel]="name" (input)="setName($event)"/>
     </mat-form-field>
   </div>
   <div class="hboxart">
@@ -24,8 +24,11 @@
         <div class="button">
           <button mat-button color="white-bg" (click)="back()">Back</button>
         </div>
-        <div class="button">
+        <div class="button" *ngIf="!modified">
           <button mat-raised-button (click)="scrape()">Scrape</button>
+        </div>
+        <div class="button" *ngIf="modified">
+          <button mat-raised-button disabled>Scrape</button>
         </div>
       </div>
     </mat-toolbar-row>

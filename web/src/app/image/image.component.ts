@@ -9,6 +9,7 @@ import { placeholder } from '../main/placeholder';
     styleUrls: ['./image.component.css']
 })
 export class ImageComponent implements OnInit, OnDestroy {
+    public modified: boolean = false;
     public file?: string;
     public name?: string;
     public sha1?: string;
@@ -23,6 +24,7 @@ export class ImageComponent implements OnInit, OnDestroy {
             this.file = params['file'];
             this.name = params['name'];
             this.sha1 = params['sha1'];
+            this.modified = false;
 
             if (this.sha1 !== undefined) {
                 this.ws.bitmap(this.sha1).then(data => {
@@ -63,7 +65,16 @@ export class ImageComponent implements OnInit, OnDestroy {
         this.router.navigate(["/"]);
     }
 
+    public setName(event: InputEvent) {
+        const newname = (event.target as HTMLInputElement).value;
+        if (newname !== this.name) {
+            this.name = newname;
+            this.modified = true;
+        }
+    }
+
     public save() {
+        this.modified = false;
         if (this.sha1 !== undefined)
             this.ws.setName(this.sha1, this.name);
     }
