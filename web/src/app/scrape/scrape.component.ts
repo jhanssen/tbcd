@@ -78,6 +78,8 @@ export class ScrapeComponent implements OnInit, OnDestroy {
 
     public imageSize(el: HTMLElement) {
         const img = el.querySelector("img");
+        if (!img)
+            return "(no image)";
         img.onload = () => {
             this.change.detectChanges();
         };
