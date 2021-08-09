@@ -41,6 +41,11 @@
 
 .enterable {
     cursor: pointer;
+    flex: 2;
+}
+
+.selectbutton {
+    margin-bottom: 7px !important;
 }
 
 .gridend {

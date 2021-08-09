@@ -19,7 +19,7 @@
           <img [src]="imageData(image.sha1) | sanitizeUrl" class="boxart"/>
         </div>
       </div>
-      <div class="center">
+      <div class="center selectbutton">
         <button *ngIf="!isSelected(image.sha1)" mat-raised-button color="primary" (click)="select(image.sha1)">Select</button>
         <button *ngIf="isSelected(image.sha1)" mat-raised-button disabled>Select</button>
       </div>
