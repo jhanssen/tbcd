@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { WebsocketService } from '../websocket.service';
@@ -23,7 +23,7 @@ export class ScrapeComponent implements OnInit, OnDestroy {
 
     constructor(private route: ActivatedRoute, private router: Router,
                 private ws: WebsocketService, private keys: KeysService,
-                private snackBar: MatSnackBar) {
+                private snackBar: MatSnackBar, private change: ChangeDetectorRef) {
     }
 
     ngOnInit(): void {
@@ -74,6 +74,14 @@ export class ScrapeComponent implements OnInit, OnDestroy {
         this.scraper = undefined;
         this.selected = undefined;
         this.candidates = [];
+    }
+
+    public imageSize(el: HTMLElement) {
+        const img = el.querySelector("img");
+        img.onload = () => {
+            this.change.detectChanges();
+        };
+        return `${img.naturalWidth}x${img.naturalHeight}`;
     }
 
     public select(image: string) {

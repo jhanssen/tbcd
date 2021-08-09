@@ -14,8 +14,13 @@
     </div>
     <div *ngIf="status === undefined" class="list">
       <div *ngFor="let candidate of candidates" class="item">
-        <div [class]="isSelected(candidate.image) ? 'selected' : 'thumbnail'" (click)="select(candidate.image)">
-          <img [src]="candidate.image"/>
+        <div #sc>
+          <div class="tcenter">
+            {{ imageSize(sc) }}
+          </div>
+          <div [class]="isSelected(candidate.image) ? 'selected' : 'thumbnail'" (click)="select(candidate.image)">
+            <img [src]="candidate.image"/>
+          </div>
         </div>
       </div>
     </div>
