@@ -7,7 +7,12 @@
     </mat-toolbar-row>
   </mat-toolbar>
   <div class="top">
-    <div class="list">
+    <div *ngIf="status !== undefined">
+      <h1 class="tcenter dim">
+        {{ status }}
+      </h1>
+    </div>
+    <div *ngIf="status === undefined" class="list">
       <div *ngFor="let candidate of candidates" class="item">
         <div [class]="isSelected(candidate.image) ? 'selected' : 'thumbnail'" (click)="select(candidate.image)">
           <img [src]="candidate.image"/>

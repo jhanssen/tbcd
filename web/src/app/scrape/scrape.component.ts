@@ -15,6 +15,7 @@ export class ScrapeComponent implements OnInit, OnDestroy {
     public sha1?: string;
     public selected?: string;
     public scraperName?: string;
+    public status?: string;
     public candidates: ScrapeImage[] = [];
 
     private scraper?: ScraperService;
@@ -26,18 +27,28 @@ export class ScrapeComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        this.status = "Initializing";
         let sub = this.route.params.subscribe(params => {
             this.name = params['name'];
             this.sha1 = params['sha1'];
 
             if (this.name !== undefined) {
+                this.status = "Scraping";
                 this.scraper = getScraperService(this.ws, this.keys);
                 this.scraperName = this.scraper.name();
                 this.scraper.scrape({ name: this.name }).then(response => {
                     this.candidates = response.candidates;
+                    if (this.candidates.length === 0) {
+                        this.status = "No results";
+                    } else {
+                        this.status = undefined;
+                    }
                 }).catch(e => {
+                    this.status = "Scrape error";
                     console.error("scrape err", e);
                 });
+            } else {
+                this.status = "No game name";
             }
         });
         this.subs.push(sub);

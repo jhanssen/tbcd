@@ -56,3 +56,7 @@ img {
     display: flex;
     justify-content: center;
 }
+
+.dim {
+    color: #666;
+}
