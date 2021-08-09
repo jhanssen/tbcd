@@ -19,6 +19,7 @@ if (typeof comPort !== "string") {
     process.exit(1);
 }
 const wsPort = options.int("ws-port", 8089);
+const wsPingInterval = options.int("ws-ping-interval", 60000);
 
 const writeDir = options("write-dir", path.join(xdg.data || "/", "tbcd"));
 if (typeof writeDir !== "string" || writeDir.indexOf("/tbcd") === 0) {
@@ -41,6 +42,11 @@ async function unlinkDataFile(file: string) {
     await fs.unlink(path.join(writeDir, file));
 }
 
+interface Ping {
+    ws: WebSocket;
+    received: boolean;
+}
+
 (async function() {
     try {
         console.log("writeDir", writeDir);
@@ -57,6 +63,26 @@ async function unlinkDataFile(file: string) {
         open: false
     };
 
+    const pings: Ping[] = [];
+
+    const findPing = (ws: WebSocket) => {
+        for (let i = 0; i < pings.length; ++i) {
+            if (pings[i].ws === ws) {
+                return pings[i];
+            }
+        }
+        return undefined;
+    };
+
+    const removePing = (ws: WebSocket) => {
+        for (let i = 0; i < pings.length; ++i) {
+            if (pings[i].ws === ws) {
+                pings.splice(i, 1);
+                return;
+            }
+        }
+    };
+
     const api = new API(comPort);
     api.on("open", () => {
         apiStatus.open = true;
@@ -71,8 +97,34 @@ async function unlinkDataFile(file: string) {
     });
 
     const wssv1 = new WebSocketServer({ port: wsPort, path: "/api/v1" });
+
+    const interval = setInterval(function ping() {
+        for (let i = 0; i < pings.length; ++i) {
+            if (!pings[i].received) {
+                console.log("pong not received in time, removing ws");
+                pings[i].ws.terminate();
+                removePing(pings[i].ws);
+            } else {
+                try {
+                    pings[i].received = false;
+                    pings[i].ws.send(JSON.stringify({ type: "ping" }));
+                } catch (e) {
+                    console.error("ping send error", e);
+                    pings[i].ws.terminate();
+                    removePing(pings[i].ws);
+                }
+            }
+        }
+    }, wsPingInterval);
+
+    wssv1.on("close", () => {
+        clearInterval(interval);
+    });
+
     console.log(`listening on ws: ${wsPort}`);
     wssv1.on("connection", ws => {
+        pings.push({ ws, received: true });
+
         const send = (type: string, id: number | undefined, msg?: any) => {
             try {
                 ws.send(JSON.stringify({ type: type, id: id, data: msg }));
@@ -107,6 +159,8 @@ async function unlinkDataFile(file: string) {
             api.off("open", openSender);
             api.off("close", closeSender);
             api.off("error", errorSender);
+
+            removePing(ws);
         });
 
         if (apiStatus.open) {
@@ -246,6 +300,19 @@ async function unlinkDataFile(file: string) {
                         });
                     } else {
                         error("fetch", id, "need an url parameter");
+                    }
+                    break;
+                case "ping":
+                    send("pong", id);
+                    break;
+                case "pong":
+                    const p = findPing(ws);
+                    if (p === undefined) {
+                        // should not happen
+                        console.error("ping not found");
+                        ws.close();
+                    } else {
+                        p.received = true;
                     }
                     break;
                 }
