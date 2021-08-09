@@ -8,7 +8,6 @@ export interface Image {
 }
 
 type Timeout = ReturnType<typeof setTimeout>;
-type Interval = ReturnType<typeof setInterval>;
 type PromiseResolve<Type> = (value: Type | PromiseLike<Type>) => void;
 type VoidResolve = PromiseResolve<void>;
 type StringResolve = PromiseResolve<string>;
@@ -86,17 +85,18 @@ export class WebsocketService {
     private base: string;
     private reconnectTimer?: Timeout;
     private backoff: number = initialBackoff;
-    private pingReceived: boolean;
-    private pingInterval?: Interval;
+    private serverPingInterval: number = 0;
+    private lastPing: number = 0;
 
     constructor() {
         const p = window.localStorage.getItem("wsport") || (defaultPort + "");
         this.wsPortNumber = parseInt(p, 10);
         if (this.wsPortNumber <= 0 || this.wsPortNumber > 65535)
             this.wsPortNumber = defaultPort;
-        this.pingReceived = false;
         this.updateBase();
         this.connect();
+
+        setInterval(() => { this.checkPing(); }, 15000);
     }
 
     public get onCurrentFile() {
@@ -200,6 +200,7 @@ export class WebsocketService {
     private connect() {
         console.log(`trying to connect to ${this.base}/api/v1`);
 
+        this.serverPingInterval = 0;
         this.id = 0;
         this.socket = new WebSocket(`${this.base}/api/v1`);
         this.socket.onmessage = event => {
@@ -295,12 +296,11 @@ export class WebsocketService {
                     break;
                 case "ping":
                     this.send("pong", undefined);
-                    this.pingReceived = true;
+                    this.lastPing = Date.now();
                     break;
                 case "initialize":
                     if (typeof data.data === "object" && typeof data.data.wsPingInterval === "number") {
-                        console.log("starting ping interval");
-                        this.pingInterval = setInterval(() => { this.checkPing() }, data.data.wsPingInterval + 30000);
+                        this.serverPingInterval = data.data.wsPingInterval;
                     }
                     break;
                 case "error":
@@ -366,6 +366,7 @@ export class WebsocketService {
             this.wsOpenSubject.next(false);
         };
         this.socket.onopen = () => {
+            this.lastPing = Date.now();
             if (this.pendingSends) {
                 for (const s of this.pendingSends) {
                     this.socket.send(s);
@@ -378,15 +379,16 @@ export class WebsocketService {
     }
 
     private checkPing() {
-        if (!this.pingReceived) {
-            // assume host dead
-            this.socket.close();
-            this.ideOpenSubject.next(false);
-            this.wsOpenSubject.next(false);
-            this.clear();
-            this.reconnect();
+        if (this.serverPingInterval > 0 && this.lastPing > 0) {
+            if (Date.now() - this.lastPing > (this.serverPingInterval * 1.5)) {
+                // assume host dead
+                this.socket.close();
+                this.ideOpenSubject.next(false);
+                this.wsOpenSubject.next(false);
+                this.clear();
+                this.reconnect();
+            }
         }
-        this.pingReceived = false;
     }
 
     private clear() {
@@ -405,10 +407,7 @@ export class WebsocketService {
         this.socket.onerror = undefined;
         this.socket.onmessage = undefined;
 
-        if (this.pingInterval) {
-            clearInterval(this.pingInterval);
-            this.pingInterval = undefined;
-        }
+        this.serverPingInterval = this.lastPing = 0;
     }
 
     private reconnect() {
