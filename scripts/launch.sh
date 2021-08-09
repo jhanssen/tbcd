@@ -19,7 +19,7 @@ case "$1" in
         ;;
     web)
         cd web/dist/web
-        http-server . -p $PORT
+        http-server . -p $PORT -P "http://localhost:${PORT}?"
         ;;
     socat)
         sudo socat TCP4-LISTEN:www,reuseaddr,fork TCP4:localhost:$PORT
