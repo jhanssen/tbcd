@@ -379,14 +379,19 @@ export class WebsocketService {
     }
 
     private checkPing() {
-        if (this.serverPingInterval > 0 && this.lastPing > 0) {
-            if (Date.now() - this.lastPing > (this.serverPingInterval * 1.5)) {
-                // assume host dead
-                this.socket.close();
-                this.ideOpenSubject.next(false);
-                this.wsOpenSubject.next(false);
-                this.clear();
-                this.reconnect();
+        if (this.socket.readyState === 1) { // OPEN
+            if (this.serverPingInterval > 0 && this.lastPing > 0) {
+                if (Date.now() - this.lastPing > (this.serverPingInterval * 1.5)) {
+                    console.error("ping timeout", Date.now(), this.lastPing, this.serverPingInterval);
+                    // assume host dead
+                    this.socket.close();
+                    this.ideOpenSubject.next(false);
+                    this.wsOpenSubject.next(false);
+                    this.clear();
+                    this.reconnect();
+                }
+            } else {
+                console.error("invalid pings for open ws socket", this.serverPingInterval, this.lastPing);
             }
         }
     }
