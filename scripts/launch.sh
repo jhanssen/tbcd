@@ -7,6 +7,10 @@ COM="$2"
 if [ -z "$COM" ]; then
    COM="/dev/ttyACM0"
 fi
+PORT="$2"
+if [ -z "$PORT" ]; then
+    PORT="8080"
+fi
 
 case "$1" in
     backend)
@@ -15,10 +19,10 @@ case "$1" in
         ;;
     web)
         cd web/dist/web
-        http-server .
+        http-server . -p $PORT
         ;;
     socat)
-        sudo socat TCP4-LISTEN:www,reuseaddr,fork TCP4:localhost:8080
+        sudo socat TCP4-LISTEN:www,reuseaddr,fork TCP4:localhost:$PORT
         ;;
     *)
         echo "unknown command $1"
