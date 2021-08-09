@@ -1,13 +1,9 @@
 import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { WebsocketService } from '../websocket.service';
 import { placeholder } from '../main/placeholder';
-
-export interface ImageUploadDialogData {
-    sha1: string;
-}
 
 @Component({
     selector: 'app-image-upload-dialog',
@@ -15,8 +11,7 @@ export interface ImageUploadDialogData {
     styleUrls: ['./image.upload.component.css']
 })
 export class ImageUploadComponent {
-    constructor(@Inject(MAT_DIALOG_DATA) private data: ImageUploadDialogData,
-                private dialogRef: MatDialogRef<ImageUploadComponent>) { }
+    constructor(private dialogRef: MatDialogRef<ImageUploadComponent>) { }
 
     public uploadChange(event: any) {
         this.dialogRef.close({ file: event.target.files[0] });
@@ -85,11 +80,7 @@ export class ImageComponent implements OnInit, OnDestroy {
     public upload() {
         if (this.sha1 === undefined)
             return;
-        const dialogRef = this.dialog.open(ImageUploadComponent, {
-            data: {
-                sha1: this.sha1
-            }
-        });
+        const dialogRef = this.dialog.open(ImageUploadComponent);
         dialogRef.afterClosed().subscribe(result => {
             if (result === undefined || !result.file)
                 return;
