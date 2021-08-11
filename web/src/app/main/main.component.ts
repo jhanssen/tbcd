@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { WebsocketService, Image } from '../websocket.service';
 import { placeholder } from './placeholder';
 
+const isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') >= 0;
+
 @Component({
   selector: 'app-main',
   templateUrl: './main.component.html',
@@ -75,6 +77,10 @@ export class MainComponent implements OnInit, OnDestroy {
                 return img;
         }
         return undefined;
+    }
+
+    public toggleClass() {
+        return isFirefox ? "iconbuttonfirefox" : "iconbuttontoggle";
     }
 
     public config() {

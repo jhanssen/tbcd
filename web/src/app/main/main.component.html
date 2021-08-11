@@ -34,7 +34,7 @@
       </div>
       <div>
         <mat-button-toggle-group class="icontoggle" multiple [(ngModel)]="queueMode" (change)="toggleQueue($event)">
-          <mat-button-toggle value="queue" class="iconbuttontoggle"><span class="material-icons-outlined">queue</span></mat-button-toggle>
+          <mat-button-toggle value="queue" [class]="toggleClass()"><span class="material-icons-outlined">queue</span></mat-button-toggle>
         </mat-button-toggle-group>
         <button mat-button (click)="config()" class="iconbutton"><span class="material-icons-outlined">settings</span></button>
       </div>
