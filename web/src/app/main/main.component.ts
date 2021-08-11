@@ -44,11 +44,13 @@ export class MainComponent implements OnInit, OnDestroy {
             this.isWsOpen = isopen;
 
             // grab the current queue
-            this.ws.queue().then(q => {
-                this.queue = q;
-                if (this.images.length > 0)
-                    this.fixQueue();
-            });
+            if (isopen) {
+                this.ws.queue().then(q => {
+                    this.queue = q;
+                    if (this.images.length > 0)
+                        this.fixQueue();
+                }).catch(e => { });
+            }
         });
         this.subs.push(sub);
     }
