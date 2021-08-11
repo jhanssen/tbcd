@@ -49,7 +49,7 @@ export class MainComponent implements OnInit, OnDestroy {
                     this.queue = q;
                     if (this.images.length > 0)
                         this.fixQueue();
-                }).catch(e => { });
+                }).catch(() => { });
             }
         });
         this.subs.push(sub);
