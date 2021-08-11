@@ -11,6 +11,8 @@ type Timeout = ReturnType<typeof setTimeout>;
 type PromiseResolve<Type> = (value: Type | PromiseLike<Type>) => void;
 type VoidResolve = PromiseResolve<void>;
 type StringResolve = PromiseResolve<string>;
+type StringArrayResolve = PromiseResolve<string[]>;
+type StringUndefinedResolve = PromiseResolve<string|undefined>;
 type ImageResolve = PromiseResolve<Image[]>;
 type Reject = (reason?: any) => void;
 
@@ -21,12 +23,13 @@ interface Request<ResolveType> {
 }
 
 type ImageRequest = Request<ImageResolve>;
-type CurrentFileRequest = Request<StringResolve>;
+type CurrentFileRequest = Request<StringUndefinedResolve>;
 type BitmapRequest = Request<StringResolve>;
 type SetBitmapRequest = Request<VoidResolve>;
 type DecryptRequest = Request<StringResolve>;
 type FetchRequest = Request<StringResolve>;
 type NameRequest = Request<StringResolve>;
+type QueueRequest = Request<StringArrayResolve>;
 
 const initialBackoff = 500;
 const maxBackoff = 30000;
@@ -67,7 +70,7 @@ function discardAll<Type>(reqs: Request<PromiseResolve<Type>>[], data: Error) {
   providedIn: 'root'
 })
 export class WebsocketService {
-    private currentFileSubject = new Subject<string>();
+    private currentFileSubject = new Subject<string|undefined>();
     private ideOpenSubject = new ReplaySubject<boolean>(1);
     private wsOpenSubject = new ReplaySubject<boolean>(1);
     private wsPortNumber: number;
@@ -81,6 +84,7 @@ export class WebsocketService {
     private decryptReqs: DecryptRequest[] = [];
     private fetchReqs: FetchRequest[] = [];
     private nameReqs: NameRequest[] = [];
+    private queueReqs: QueueRequest[] = [];
     private pendingSends?: string[];
     private base: string;
     private reconnectTimer?: Timeout;
@@ -127,15 +131,15 @@ export class WebsocketService {
         this.connect();
     }
 
-    public currentFile(): Promise<string> {
+    public currentFile(): Promise<string|undefined> {
         const id = this.nextId();
-        return new Promise<string>((resolve, reject) => {
+        return new Promise<string|undefined>((resolve, reject) => {
             this.currentFileReqs.push({ id, resolve, reject });
             this.send("currentFile", id);
         });
     }
 
-    public setCurrentFile(file: string) {
+    public setCurrentFile(file: string | undefined) {
         this.send("setCurrentFile", undefined, { file: file });
     }
 
@@ -162,6 +166,26 @@ export class WebsocketService {
             const encoded: string = (typeof bitmap === "string") ? bitmap : encode(bitmap);
             this.send("setBitmap", id, { sha1: sha1, data: encoded });
         });
+    }
+
+    public queue(): Promise<string[]> {
+        const id = this.nextId();
+        return new Promise<string[]>((resolve, reject) => {
+            this.queueReqs.push({ id, resolve, reject });
+            this.send("queue", id);
+        });
+    }
+
+    public setQueue(queue: string[]) {
+        this.send("setQueue", undefined, queue);
+    }
+
+    public queuePrev() {
+        this.send("queuePrev", undefined);
+    }
+
+    public queueNext() {
+        this.send("queueNext", undefined);
     }
 
     public decrypt(data: string): Promise<string> {
@@ -222,7 +246,7 @@ export class WebsocketService {
                     this.ideOpenSubject.next(false);
                     break;
                 case "currentFile":
-                    if (typeof data.data === "string") {
+                    if (typeof data.data === "string" || data.data === undefined) {
                         if (typeof data.id === "number") {
                             dispatch<string>(data.id, data.data, this.currentFileReqs);
                         } else {
@@ -283,6 +307,17 @@ export class WebsocketService {
                         console.error("no data for fetch");
                     }
                     break;
+                case "queue":
+                    if (data.data instanceof Array) {
+                        if (typeof data.id === "number") {
+                            dispatch<string[]>(data.id, data.data, this.queueReqs);
+                        } else {
+                            console.error("no id for queue response");
+                        }
+                    } else {
+                        console.error("no data for queue");
+                    }
+                    break;
                 case "name":
                     if (typeof data.data === "string") {
                         if (typeof data.id === "number") {
@@ -310,7 +345,7 @@ export class WebsocketService {
                             switch (data.data.errorType) {
                             case "currentFile":
                                 handled = true;
-                                discard<string>(data.id, data.data.error, this.currentFileReqs);
+                                discard<string|undefined>(data.id, data.data.error, this.currentFileReqs);
                                 break;
                             case "images":
                                 handled = true;
@@ -335,6 +370,10 @@ export class WebsocketService {
                             case "name":
                                 handled = true;
                                 discard<string>(data.id, data.data.error, this.nameReqs);
+                                break;
+                            case "queue":
+                                handled = true;
+                                discard<string[]>(data.id, data.data.error, this.queueReqs);
                                 break;
                             }
                         }
@@ -399,11 +438,12 @@ export class WebsocketService {
     private clear() {
         const e = new Error("socket closed");
         discardAll<Image[]>(this.imageReqs, e);
-        discardAll<string>(this.currentFileReqs, e);
+        discardAll<string|undefined>(this.currentFileReqs, e);
         discardAll<string>(this.bitmapReqs, e);
         discardAll<string>(this.decryptReqs, e);
         discardAll<string>(this.fetchReqs, e);
         discardAll<string>(this.nameReqs, e);
+        discardAll<string[]>(this.queueReqs, e);
         discardAll<void>(this.setBitmapReqs, e);
 
         // unset handlers to be safe

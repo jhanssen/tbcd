@@ -82,7 +82,7 @@ export class API extends EventEmitter {
 
     public getCurrentFile(): Promise<string> {
         return new Promise<string>((resolve, reject) => {
-            if (this.currentFile) {
+            if (this.currentFile !== undefined) {
                 resolve(this.currentFile);
             } else {
                 this.currentFileReqs.push({ resolve: resolve, reject: reject });
@@ -99,6 +99,11 @@ export class API extends EventEmitter {
             }
             return true;
         });
+    }
+
+    public removeFile() {
+        this.write("disk remove");
+        this.write("status");
     }
 
     private tryReconnect() {
@@ -214,11 +219,18 @@ export class API extends EventEmitter {
             switch (true) {
             case /^status$/.test(this.currentCmd):
                 // find the current image
+                let gotIso = false;
                 for (const l of data) {
                     if (l.indexOf("ISO file: ") === 0) {
                         this.currentFile = l.substr(10);
                         this.finalizeCurrentFile();
+                        gotIso = true;
                     }
+                }
+                if (!gotIso) {
+                    // no current file
+                    this.currentFile = "";
+                    this.finalizeCurrentFile();
                 }
                 break;
             case /^dir$/.test(this.currentCmd):

@@ -63,6 +63,13 @@ interface Ping {
         open: false
     };
 
+    const queue: {
+        currentFile?: string;
+        queue: string[];
+    } = {
+        queue: []
+    };
+
     const pings: Ping[] = [];
 
     const findPing = (ws: WebSocket) => {
@@ -137,8 +144,9 @@ interface Ping {
             send("error", id, { "errorType": type, "error": err });
         };
 
-        const currentFileSender = (file: string) => {
-            send("currentFile", undefined, file);
+        const currentFileSender = (file?: string) => {
+            queue.currentFile = file ? file : undefined;
+            send("currentFile", undefined, queue.currentFile);
         };
         const openSender = () => {
             send("open", undefined);
@@ -189,14 +197,85 @@ interface Ping {
                         send("images", id, imgs);
                     }).catch(e => { throw e; });
                     break;
+                case "setQueue":
+                    // verify that the queue is a queue
+                    if (d.data instanceof Array) {
+                        let invalidItem: string | undefined = undefined;
+                        const q = d.data.filter((item: any) => {
+                            if (item === undefined)
+                                return false;
+                            else if (typeof item === "string")
+                                return true;
+                            invalidItem = typeof item;
+                            return false;
+                        });
+                        if (invalidItem) {
+                            error("setQueue", id, `invalid item in queue: ${invalidItem}`);
+                        } else {
+                            console.log("setting queue", q);
+                            queue.queue = q;
+                            if (q.length > 0 && queue.currentFile !== q[0]) {
+                                queue.currentFile = q[0];
+                                assert(queue.currentFile !== undefined, "can't be undefined");
+                                api.selectFile(queue.currentFile);
+                            }
+                            send("setQueue", id);
+                        }
+                    }
+                    break;
+                case "queue":
+                    send("queue", id, queue.queue);
+                    break;
+                case "queuePrev":
+                    if (queue.queue.length === 0) {
+                        error("queuePrev", id, "queue is empty");
+                        return;
+                    }
+                    // find currentfile in queue
+                    let prev: number;
+                    if (queue.currentFile === undefined) {
+                        prev = queue.queue.length - 1;
+                    } else {
+                        prev = queue.queue.indexOf(queue.currentFile);
+                        if (prev === -1) {
+                            error("queuePrev", id, `current file ${queue.currentFile} is not in queue`);
+                            return;
+                        }
+                        if (--prev < 0)
+                            prev = queue.queue.length - 1;
+                    }
+                    api.selectFile(queue.queue[prev]);
+                    break;
+                case "queueNext":
+                    if (queue.queue.length === 0) {
+                        error("queueNext", id, "queue is empty");
+                        return;
+                    }
+                    // find currentfile in queue
+                    let next: number;
+                    if (queue.currentFile === undefined) {
+                        next = 0;
+                    } else {
+                        next = queue.queue.indexOf(queue.currentFile);
+                        if (next === -1) {
+                            error("queueNext", id, `current file ${queue.currentFile} is not in queue`);
+                            return;
+                        }
+                        if (++next >= queue.queue.length)
+                            next = 0;
+                    }
+                    api.selectFile(queue.queue[next]);
+                    break;
                 case "currentFile":
                     api.getCurrentFile().then(file => {
-                        send("currentFile", id, file);
+                        send("currentFile", id, file ? file : undefined);
                     }).catch(e => { throw e; });
                     break;
                 case "setCurrentFile":
                     if (typeof d.data === "object" && typeof d.data.file === "string") {
                         api.selectFile(d.data.file);
+                    } else if (d.data === undefined) {
+                        api.removeFile();
                     } else {
                         error("setCurrentFile", id, "need a file parameter");
                     }

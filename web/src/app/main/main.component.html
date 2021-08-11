@@ -20,13 +20,23 @@
         </div>
       </div>
       <div class="center selectbutton">
-        <button *ngIf="!isSelected(image.sha1)" mat-raised-button color="primary" (click)="select(image.sha1)">Select</button>
-        <button *ngIf="isSelected(image.sha1)" mat-raised-button disabled>Select</button>
+        <button *ngIf="queueMode.length === 0 && !isSelected(image.sha1)" mat-raised-button color="primary" (click)="select(image.sha1)">Select</button>
+        <button *ngIf="queueMode.length === 0 && isSelected(image.sha1)" mat-raised-button disabled>Select</button>
+        <button *ngIf="queueMode.length !== 0 && !inQueue(image.sha1) && !isSelected(image.sha1)" mat-raised-button color="accent" (click)="enqueue(image.sha1)">{{ queueName(image.sha1) }}</button>
+        <button *ngIf="queueMode.length !== 0 && inQueue(image.sha1) && !isSelected(image.sha1)" mat-raised-button color="warn" (click)="enqueue(image.sha1)">{{ queueName(image.sha1) }}</button>
+        <button *ngIf="queueMode.length !== 0 && isSelected(image.sha1)" mat-raised-button (click)="enqueue(image.sha1)">{{ queueName(image.sha1) }}</button>
       </div>
     </div>
-    <div class="gridend">
-      <div class="right">
-        <button mat-button (click)="config()" class="config"><span class="material-icons-outlined">settings</span></button>
+    <div [class]="queueMode.length !== 0 ? 'gridend between' : 'gridend right'">
+      <div class="left" *ngIf="queueMode.length !== 0">
+        <button mat-button (click)="queuePrev()" class="iconbutton"><span class="material-icons-outlined">arrow_back</span></button>
+        <button mat-button (click)="queueNext()" class="iconbutton"><span class="material-icons-outlined">arrow_forward</span></button>
+      </div>
+      <div>
+        <mat-button-toggle-group class="icontoggle" multiple [(ngModel)]="queueMode" (change)="toggleQueue($event)">
+          <mat-button-toggle value="queue" class="iconbuttontoggle"><span class="material-icons-outlined">queue</span></mat-button-toggle>
+        </mat-button-toggle-group>
+        <button mat-button (click)="config()" class="iconbutton"><span class="material-icons-outlined">settings</span></button>
       </div>
     </div>
   </div>

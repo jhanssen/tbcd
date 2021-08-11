@@ -13,6 +13,8 @@ export class MainComponent implements OnInit, OnDestroy {
     public current?: string;
     public isIdeOpen: boolean = false;
     public isWsOpen: boolean = false;
+    public queueMode: string[] = [];
+    public queue: string[] = [];
     private imageBitmaps: { [key: string]: string } = {};
     private imageNames: { [key: string]: string } = {};
     private subs: any[] = [];
@@ -20,13 +22,17 @@ export class MainComponent implements OnInit, OnDestroy {
     constructor(private ws: WebsocketService, private router: Router) { }
 
     ngOnInit(): void {
+        this.images = [];
+        this.queueMode = [];
         this.ws.images().then(imgs => {
             this.images = imgs.sort((a, b) => {
                 return a.name.localeCompare(b.name);
             });
             this.loadImageDatas();
+            this.fixQueue();
         });
         let sub = this.ws.onCurrentFile.subscribe(file => {
+            console.log("current is now", file);
             this.current = file;
         });
         this.subs.push(sub);
@@ -36,6 +42,13 @@ export class MainComponent implements OnInit, OnDestroy {
         this.subs.push(sub);
         sub = this.ws.onWsOpen.subscribe(isopen => {
             this.isWsOpen = isopen;
+
+            // grab the current queue
+            this.ws.queue().then(q => {
+                this.queue = q;
+                if (this.images.length > 0)
+                    this.fixQueue();
+            });
         });
         this.subs.push(sub);
     }
@@ -103,6 +116,75 @@ export class MainComponent implements OnInit, OnDestroy {
             return this.imageBitmaps[sha1];
         }
         return placeholder;
+    }
+
+    public queuePrev() {
+        this.ws.queuePrev();
+    }
+
+    public queueNext() {
+        this.ws.queueNext();
+    }
+
+    public toggleQueue(event: { value: string[]|null }) {
+        console.log("togg", event);
+        if (event.value.length === 0) {
+            console.log("event", event);
+            this.queueMode = [];
+            this.queue = [];
+            this.updateQueue();
+        }
+    }
+
+    public inQueue(sha1: string) {
+        return this.queue.indexOf(sha1) !== -1;
+    }
+
+    public enqueue(sha1: string) {
+        const idx = this.queue.indexOf(sha1);
+        if (idx >= 0) {
+            this.queue.splice(idx, 1);
+            if (idx === 0 && this.queue.length > 0) {
+                this.select(this.queue[0]);
+            } else {
+                this.ws.setCurrentFile(undefined);
+            }
+        } else {
+            this.queue.push(sha1);
+            if (this.queue.length === 1) {
+                this.select(sha1);
+            }
+        }
+        this.updateQueue();
+    }
+
+    public queueName(sha1: string) {
+        const idx = this.queue.indexOf(sha1);
+        if (idx >= 0) {
+            return `#${idx + 1}`;
+        }
+        return "Select";
+    }
+
+    private updateQueue() {
+        const q = this.queue.map(sha1 => {
+            const image = this.find(sha1);
+            if (image === undefined)
+                return undefined;
+            return image.name;
+        });
+        this.ws.setQueue(q);
+    }
+
+    private fixQueue() {
+        this.queue = this.queue.map(n => {
+            for (const img of this.images) {
+                if (img.name === n)
+                    return img.sha1;
+            }
+            return undefined;
+        }).filter(e => e !== undefined);
+        this.queueMode = this.queue.length > 0 ? ["queue"] : [];
     }
 
     private loadImageDatas() {
