@@ -129,9 +129,7 @@ export class MainComponent implements OnInit, OnDestroy {
     }
 
     public toggleQueue(event: { value: string[]|null }) {
-        console.log("togg", event);
         if (event.value.length === 0) {
-            console.log("event", event);
             this.queueMode = [];
             this.queue = [];
             this.updateQueue();
