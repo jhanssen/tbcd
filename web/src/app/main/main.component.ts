@@ -23,7 +23,9 @@ export class MainComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.images = [];
+        this.current = undefined;
         this.queueMode = [];
+        this.queue = [];
         this.ws.images().then(imgs => {
             this.images = imgs.sort((a, b) => {
                 return a.name.localeCompare(b.name);
@@ -61,6 +63,8 @@ export class MainComponent implements OnInit, OnDestroy {
         }
         this.subs = [];
         this.images = [];
+        this.queue = [];
+        this.queueMode = [];
         this.current = undefined;
         this.imageBitmaps = {};
     }
