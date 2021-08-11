@@ -1,1 +1,6 @@
 /* You can add global styles to this file, and also import other style files */
+
+span.mat-button-toggle-label-content {
+    line-height: 36px !important;
+    padding: 0px 8px 0px 8px !important;
+}

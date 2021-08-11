@@ -44,12 +44,13 @@
 }
 
 .iconbuttontoggle {
+    max-width: 40px;
+    max-height: 36px;
+    min-height: 36px;
 }
 
 .iconbuttontoggle > button {
-    width: 40px !important;
     min-width: unset !important;
-    padding: 0px 6px 0px 6px !important;
 }
 
 .iconbutton {
@@ -70,6 +71,7 @@
 .gridend {
     grid-column-start: 1;
     grid-column: 1 / -1;
+    max-height: 36px;
 }
 
 .dim {
