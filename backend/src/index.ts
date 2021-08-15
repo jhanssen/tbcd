@@ -1,5 +1,6 @@
 import Options from "@jhanssen/options";
 import WebSocket from "ws";
+import rpio from "rpio";
 import xdg from "xdg-basedir";
 import mkdirp from "mkdirp";
 import fetch from "node-fetch";
@@ -20,6 +21,9 @@ if (typeof comPort !== "string") {
 }
 const wsPort = options.int("ws-port", 8089);
 const wsPingInterval = options.int("ws-ping-interval", 60000);
+
+const queueButtonPin = options.int("queue-button-pin", -1);
+const longPressMs = options.int("queue-button-long-press", 1500);
 
 const writeDir = options("write-dir", path.join(xdg.data || "/", "tbcd"));
 if (typeof writeDir !== "string" || writeDir.indexOf("/tbcd") === 0) {
@@ -66,9 +70,88 @@ interface Ping {
     const queue: {
         currentFile?: string;
         queue: string[];
+        buttonPressed?: number;
+        prev: () => Error|undefined;
+        next: () => Error|undefined;
     } = {
-        queue: []
+        queue: [],
+        prev: () => {
+            if (queue.queue.length === 0) {
+                return new Error("queue is empty");
+            }
+            // find currentfile in queue
+            let prev: number;
+            if (queue.currentFile === undefined) {
+                prev = queue.queue.length - 1;
+            } else {
+                prev = queue.queue.indexOf(queue.currentFile);
+                if (prev === -1) {
+                    return new Error(`current file ${queue.currentFile} is not in queue`);
+                }
+                if (--prev < 0)
+                    prev = queue.queue.length - 1;
+            }
+            api.selectFile(queue.queue[prev]);
+            return undefined;
+        },
+        next: () => {
+            if (queue.queue.length === 0) {
+                return new Error("queue is empty");
+            }
+            // find currentfile in queue
+            let next: number;
+            if (queue.currentFile === undefined) {
+                next = 0;
+            } else {
+                next = queue.queue.indexOf(queue.currentFile);
+                if (next === -1) {
+                    return new Error(`current file ${queue.currentFile} is not in queue`);
+                }
+                if (++next >= queue.queue.length)
+                    next = 0;
+            }
+            api.selectFile(queue.queue[next]);
+            return undefined;
+        }
     };
+
+    const handleQueuePin = () => {
+        const pressed = rpio.read(queueButtonPin) !== 1;
+        if (pressed && queue.buttonPressed === undefined) {
+            queue.buttonPressed = Date.now();
+        } else if (!pressed && queue.buttonPressed !== undefined) {
+            // short press or long press
+            let e: Error | undefined;
+            if (Date.now() - queue.buttonPressed >= longPressMs) {
+                // long press, move backward in queue
+                console.log("long press");
+                e = queue.prev();
+            } else {
+                // short press, move forward in queue
+                console.log("short press");
+                e = queue.next();
+            }
+            if (e !== undefined) {
+                console.error("queue error", e.message);
+            }
+            queue.buttonPressed = undefined;
+        }
+    };
+
+    // setup gpio
+    if (queueButtonPin >= 0) {
+        rpio.open(queueButtonPin, rpio.INPUT, rpio.PULL_UP);
+        rpio.poll(queueButtonPin, (pin: number) => {
+            switch (pin) {
+            case queueButtonPin:
+                handleQueuePin();
+                break;
+            default:
+                console.error(`unhandled pin: ${pin}`);
+                break;
+            }
+        });
+    }
 
     const pings: Ping[] = [];
 
@@ -226,46 +309,18 @@ interface Ping {
                 case "queue":
                     send("queue", id, queue.queue);
                     break;
-                case "queuePrev":
-                    if (queue.queue.length === 0) {
-                        error("queuePrev", id, "queue is empty");
-                        return;
+                case "queuePrev": {
+                    const ret = queue.prev();
+                    if (ret !== undefined) {
+                        error("queuePrev", id, ret.message);
                     }
-                    // find currentfile in queue
-                    let prev: number;
-                    if (queue.currentFile === undefined) {
-                        prev = queue.queue.length - 1;
-                    } else {
-                        prev = queue.queue.indexOf(queue.currentFile);
-                        if (prev === -1) {
-                            error("queuePrev", id, `current file ${queue.currentFile} is not in queue`);
-                            return;
-                        }
-                        if (--prev < 0)
-                            prev = queue.queue.length - 1;
+                    break; }
+                case "queueNext": {
+                    const ret = queue.next();
+                    if (ret !== undefined) {
+                        error("queueNext", id, ret.message);
                     }
-                    api.selectFile(queue.queue[prev]);
-                    break;
-                case "queueNext":
-                    if (queue.queue.length === 0) {
-                        error("queueNext", id, "queue is empty");
-                        return;
-                    }
-                    // find currentfile in queue
-                    let next: number;
-                    if (queue.currentFile === undefined) {
-                        next = 0;
-                    } else {
-                        next = queue.queue.indexOf(queue.currentFile);
-                        if (next === -1) {
-                            error("queueNext", id, `current file ${queue.currentFile} is not in queue`);
-                            return;
-                        }
-                        if (++next >= queue.queue.length)
-                            next = 0;
-                    }
-                    api.selectFile(queue.queue[next]);
-                    break;
+                    break; }
                 case "currentFile":
                     api.getCurrentFile().then(file => {
                         send("currentFile", id, file ? file : undefined);
