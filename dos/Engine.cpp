@@ -11,6 +11,7 @@ unsigned char normalKeys[MAX_SCAN_CODES] = { 0 };
 unsigned char extendedKeys[MAX_SCAN_CODES] = { 0 };
 
 void __interrupt __far (*oldCtrlCISR)() = 0;
+void __interrupt __far (*oldCtrlBrkISR)() = 0;
 void __interrupt __far (*oldKeyboardISR)() = 0;
 
 static inline void setMode(int mode)
@@ -23,6 +24,11 @@ static inline void setMode(int mode)
 }
 
 static void __interrupt __far ctrlCHandler()
+{
+    Engine::sEngine->mDone = true;
+}
+
+static void __interrupt __far ctrlBrkHandler()
 {
     Engine::sEngine->mDone = true;
 }
@@ -60,6 +66,10 @@ Engine::Engine()
     oldCtrlCISR = _dos_getvect(0x23);
     _dos_setvect(0x23, ctrlCHandler);
 
+    // setup ctrl-break handler
+    oldCtrlBrkISR = _dos_getvect(0x1B);
+    _dos_setvect(0x1B, ctrlBrkHandler);
+
     //setup key handler
     oldKeyboardISR = _dos_getvect(0x9);
     _dos_setvect(0x9, keyboardHandler);
@@ -74,6 +84,10 @@ Engine::~Engine()
     if (oldCtrlCISR != 0) {
         _dos_setvect(0x23, oldCtrlCISR);
         oldCtrlCISR = 0;
+    }
+    if (oldCtrlBrkISR != 0) {
+        _dos_setvect(0x1B, oldCtrlBrkISR);
+        oldCtrlBrkISR = 0;
     }
     if (oldKeyboardISR != 0) {
         _dos_setvect(0x9, oldKeyboardISR);
