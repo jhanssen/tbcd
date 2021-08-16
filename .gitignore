@@ -1,2 +1,5 @@
 node_modules
 build
+*.c.o
+*.cpp.o
+*.exe
