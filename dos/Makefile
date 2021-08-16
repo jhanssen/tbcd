@@ -25,15 +25,11 @@ CXX_FLAGS := -bt=dos -w3 -zq -d+
 C_FLAGS := -bt=dos -za99 -w3 -zq -d+
 LINK_FLAGS := -bdos -mcmodel=s
 
-all: link
-
-compile: $(SOURCES_CPP) $(SOURCES_C)
+$(TARGET): $(SOURCES_CPP) $(SOURCES_C)
+	$(LINK) $(LINK_FLAGS) $(SOURCES_CPP) $(SOURCES_C) -o $(TARGET)
 
 %.cpp.o: %.cpp Makefile
 	$(CXX) $< -fo=$@ -c -cc++ $(CXX_FLAGS) -i=$(INCLUDE):$(SERIAL_INCLUDE)
 
 %.c.o: %.c Makefile
 	$(CC) $< -fo=$@ -c -cc $(C_FLAGS) -i=$(INCLUDE):$(SERIAL_INCLUDE)
-
-link: compile $(TARGET)
-	$(LINK) $(LINK_FLAGS) $(SOURCES_CPP) $(SOURCES_C) -o $(TARGET)
