@@ -21,8 +21,9 @@ SOURCES_C=$(patsubst %.c, %.c.o, $(shell find $(SRCDIR) -name "*.c"))
 
 SERIAL_INCLUDE := ${CURDIR}/serial
 
-CXX_FLAGS := -bt=dos -w3 -zq -d+ -2
-C_FLAGS := -bt=dos -za99 -w3 -zq -d+ -2
+COMPILE_FLAGS := -bt=dos -w3 -zq -d+ -2
+CXX_FLAGS := $(COMPILE_FLAGS)
+C_FLAGS := $(COMPILE_FLAGS) -za99
 LINK_FLAGS := -bdos -mcmodel=s
 
 $(TARGET): $(SOURCES_CPP) $(SOURCES_C)
