@@ -10,7 +10,7 @@ Font::Font(const char* file, unsigned short width, unsigned short height,
            unsigned short padrow, const char* charset)
     : mWidth(width), mHeight(height),
       mCharWidth(charwidth), mCharHeight(charheight),
-      mPadRow(padrow)
+      mPadRow(padrow), mLow(0)
 {
     FILE* f = fopen(file, "r");
     if (f == 0)
@@ -36,21 +36,23 @@ Font::Font(const char* file, unsigned short width, unsigned short height,
             low = *cur;
         ++cur;
     }
+    mLow = low;
     // now build the offsets
     unsigned short curline = 0;
     unsigned short offset = 0;
     unsigned short nextbreak = width;
     cur = charset;
     while (*cur != '\0') {
-        if (*cur >= mGlyphOffsets.size())
-            mGlyphOffsets.resize(*cur + 1);
+        const unsigned short where = *cur - low;
+        if (where >= mGlyphOffsets.size())
+            mGlyphOffsets.resize(where + 1);
         if (offset + charwidth > nextbreak) {
             // next line
             curline += charheight + padrow;
             offset = curline * width;
             nextbreak = offset + width;
         }
-        mGlyphOffsets[*cur] = offset;
+        mGlyphOffsets[where] = offset;
         offset += charwidth;
         ++cur;
     }
@@ -77,8 +79,8 @@ void Font::drawText(unsigned short x0, unsigned short y0, unsigned short x1, uns
                 // convert a-z to A-Z
                 curchar -= 32;
             }
-            assert(curchar < mGlyphOffsets.size());
-            const unsigned short goffset = mGlyphOffsets[curchar] + ((y - y0) * mWidth);
+            assert(curchar - mLow < mGlyphOffsets.size());
+            const unsigned short goffset = mGlyphOffsets[curchar - mLow] + ((y - y0) * mWidth);
             for (unsigned short boff = 0; boff < mCharWidth; ++boff) {
                 const unsigned char pp = mBuffer[goffset + boff];
                 for (unsigned char ip = 0; ip < 8; ++ip) {

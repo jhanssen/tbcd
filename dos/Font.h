@@ -19,9 +19,10 @@ public:
 
 private:
     std::vector<unsigned char> mBuffer;
+    std::vector<unsigned short> mGlyphOffsets;
     unsigned short mWidth, mHeight, mCharWidth, mCharHeight;
     unsigned short mPadLeft, mPadTop, mPadRow;
-    std::vector<unsigned short> mGlyphOffsets;
+    unsigned char mLow;
 };
 
 inline void Font::drawText(unsigned short x0, unsigned short y0, unsigned short x1, unsigned short y1, unsigned char color, const std::string& text)
