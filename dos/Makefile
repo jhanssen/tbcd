@@ -1,10 +1,10 @@
 TARGET := tbcd.exe
 
 ifeq ($(WATCOM),)
-    $(error No WATCOM variable set)
+	$(error No WATCOM variable set)
 endif
 ifeq ($(WATCOM_PREFIX),)
-    WATCOM_PREFIX := "binl64"
+	WATCOM_PREFIX := "binl64"
 endif
 
 CC=$(WATCOM)/$(WATCOM_PREFIX)/wcl
