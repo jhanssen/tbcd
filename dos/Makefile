@@ -1,4 +1,7 @@
-TARGET := tbcd.exe
+SRCDIR := .
+DSTDIR := ./build
+
+TARGET := $(addprefix $(DSTDIR)/, tbcd.exe)
 
 ifeq ($(WATCOM),)
 	$(error No WATCOM variable set)
@@ -15,15 +18,19 @@ ifeq (,$(wildcard $(CC)))
 	$(error No compiler executable found)
 endif
 
+SUBDIRS=serial
+
+$(shell mkdir -p $(DSTDIR))
+$(foreach sub,$(SUBDIRS),$(shell mkdir -p $(DSTDIR)/$(sub)))
+
 INCLUDE=$(WATCOM)/h
-SRCDIR := .
 
-export PATH := $(WATCOM)/$(WATCOM_PREFIX):$(PATH)
+SPACE := $(subst ,, )
+EXTRA_INCLUDES := $(foreach sub,$(SUBDIRS),$(CURDIR)/$(sub))
+EXTRA_INCLUDES := $(subst $(SPACE),:,$(EXTRA_INCLUDES))
 
-SOURCES_CPP=$(patsubst %.cpp, %.cpp.o, $(shell find $(SRCDIR) -name "*.cpp"))
-SOURCES_C=$(patsubst %.c, %.c.o, $(shell find $(SRCDIR) -name "*.c"))
-
-SERIAL_INCLUDE := ${CURDIR}/serial
+SOURCES_CPP=$(addprefix $(DSTDIR)/, $(patsubst %.cpp, %.cpp.o, $(shell find $(SRCDIR) -name "*.cpp")))
+SOURCES_C=$(addprefix $(DSTDIR)/, $(patsubst %.c, %.c.o, $(shell find $(SRCDIR) -name "*.c")))
 
 COMPILE_FLAGS := -bt=dos -w3 -zq -d+ -2
 CXX_FLAGS := $(COMPILE_FLAGS)
@@ -33,8 +40,10 @@ LINK_FLAGS := -bdos -mcmodel=s
 $(TARGET): $(SOURCES_CPP) $(SOURCES_C)
 	$(LINK) $(LINK_FLAGS) $(SOURCES_CPP) $(SOURCES_C) -o $(TARGET)
 
-%.cpp.o: %.cpp Makefile
-	$(CXX) $< -fo=$@ -c -cc++ $(CXX_FLAGS) -i=$(INCLUDE):$(SERIAL_INCLUDE)
+$(DSTDIR)/%.cpp.o: %.cpp Makefile
+	$(CXX) $< -fo=$@ -c -cc++ $(CXX_FLAGS) -i=$(INCLUDE):$(EXTRA_INCLUDES)
 
-%.c.o: %.c Makefile
-	$(CC) $< -fo=$@ -c -cc $(C_FLAGS) -i=$(INCLUDE):$(SERIAL_INCLUDE)
+$(DSTDIR)/%.c.o: %.c Makefile
+	$(CC) $< -fo=$@ -c -cc $(C_FLAGS) -i=$(INCLUDE):$(EXTRA_INCLUDES)
+
+export PATH := $(WATCOM)/$(WATCOM_PREFIX):$(PATH)
