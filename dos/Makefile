@@ -11,6 +11,10 @@ CC=$(WATCOM)/$(WATCOM_PREFIX)/wcl
 CXX=$(WATCOM)/$(WATCOM_PREFIX)/wcl
 LINK=$(WATCOM)/$(WATCOM_PREFIX)/owcc
 
+ifeq (,$(wildcard $(CC)))
+	$(error No compiler executable found)
+endif
+
 INCLUDE=$(WATCOM)/h
 SRCDIR := .
 
