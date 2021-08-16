@@ -14,6 +14,21 @@ void __interrupt __far (*oldCtrlCISR)() = 0;
 void __interrupt __far (*oldCtrlBrkISR)() = 0;
 void __interrupt __far (*oldKeyboardISR)() = 0;
 
+inline void waitForVSync()
+{
+    _asm {
+        mov dx, 0x3DA
+      l1:
+        in al, dx
+        and al, 0x08
+        jnz l1
+      l2:
+        in al, dx
+        and al, 0x08
+        jz l2
+    }
+}
+
 static inline void setMode(int mode)
 {
     union REGS regs;
@@ -100,4 +115,5 @@ Engine::~Engine()
 
 void Engine::process()
 {
+    waitForVSync();
 }
