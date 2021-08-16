@@ -4,7 +4,7 @@ DSTDIR := ./build
 TARGET := $(addprefix $(DSTDIR)/, tbcd.exe)
 
 ifeq ($(WATCOM),)
-	$(error No WATCOM variable set)
+  $(error No WATCOM variable set)
 endif
 ifeq ($(WATCOM_PREFIX),)
 	WATCOM_PREFIX := "binl64"
@@ -15,7 +15,7 @@ CXX=$(WATCOM)/$(WATCOM_PREFIX)/wcl
 LINK=$(WATCOM)/$(WATCOM_PREFIX)/owcc
 
 ifeq (,$(wildcard $(CC)))
-	$(error No compiler executable found)
+  $(error No compiler executable found)
 endif
 
 SUBDIRS=serial
@@ -45,5 +45,8 @@ $(DSTDIR)/%.cpp.o: %.cpp Makefile
 
 $(DSTDIR)/%.c.o: %.c Makefile
 	$(CC) $< -fo=$@ -c -cc $(C_FLAGS) -i=$(INCLUDE):$(EXTRA_INCLUDES)
+
+clean:
+	rm -f $(TARGET) $(SOURCES_CPP) $(SOURCES_C)
 
 export PATH := $(WATCOM)/$(WATCOM_PREFIX):$(PATH)
