@@ -26,7 +26,7 @@ $(foreach sub,$(SUBDIRS),$(shell mkdir -p $(DSTDIR)/$(sub)))
 INCLUDE=$(WATCOM)/h
 
 SPACE := $(subst ,, )
-EXTRA_INCLUDES := $(foreach sub,$(SUBDIRS),$(CURDIR)/$(sub))
+EXTRA_INCLUDES := $(foreach sub,$(SUBDIRS),$(SRCDIR)/$(sub))
 EXTRA_INCLUDES := $(subst $(SPACE),:,$(EXTRA_INCLUDES))
 
 SOURCES_CPP=$(addprefix $(DSTDIR)/, $(patsubst %.cpp, %.cpp.o, $(shell find $(SRCDIR) -name "*.cpp")))
