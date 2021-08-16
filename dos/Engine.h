@@ -1,6 +1,8 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+#include "Font.h"
+
 class Engine
 {
 public:
@@ -12,6 +14,7 @@ public:
 
 private:
     bool mDone;
+    Font mFont;
 
     static Engine* sEngine;
 

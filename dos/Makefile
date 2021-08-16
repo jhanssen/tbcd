@@ -32,10 +32,10 @@ EXTRA_INCLUDES := $(subst $(SPACE),:,$(EXTRA_INCLUDES))
 SOURCES_CPP=$(addprefix $(DSTDIR)/, $(patsubst %.cpp, %.cpp.o, $(shell find $(SRCDIR) -name "*.cpp")))
 SOURCES_C=$(addprefix $(DSTDIR)/, $(patsubst %.c, %.c.o, $(shell find $(SRCDIR) -name "*.c")))
 
-COMPILE_FLAGS := -bt=dos -w3 -zq -d+ -2
-CXX_FLAGS := $(COMPILE_FLAGS)
+COMPILE_FLAGS := -bt=dos -w3 -zq -d+ -2 -ox
+CXX_FLAGS := $(COMPILE_FLAGS) -xs
 C_FLAGS := $(COMPILE_FLAGS) -za99
-LINK_FLAGS := -bdos -mcmodel=s
+LINK_FLAGS := -bdos -mcmodel=c
 
 $(TARGET): $(SOURCES_CPP) $(SOURCES_C)
 	$(LINK) $(LINK_FLAGS) $(SOURCES_CPP) $(SOURCES_C) -o $(TARGET)

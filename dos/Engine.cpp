@@ -1,4 +1,5 @@
 #include "Engine.h"
+#include "Log.h"
 #include <conio.h>
 #include <dos.h>
 #include <serial.h>
@@ -74,8 +75,13 @@ static void __interrupt __far keyboardHandler()
 }
 
 Engine::Engine()
-    : mDone(false)
+    : mDone(false), mFont("font\\bitmap.bin", 28, 44, 1, 14, 1, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`{|}~")
 {
+    if (!mFont.isValid()) {
+        mDone = true;
+        return;
+    }
+
     sEngine = this;
 
     // setup ctrl-c handler
@@ -116,4 +122,9 @@ Engine::~Engine()
 void Engine::process()
 {
     waitForVSync();
+    mFont.drawText(10, 10, 100, 100, 4, "0abcd");
+
+    // exit if esc is pressed
+    if (normalKeys[1] == 1)
+        mDone = true;
 }
