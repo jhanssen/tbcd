@@ -36,8 +36,9 @@ static void __interrupt __far ctrlBrkHandler()
 static void __interrupt __far keyboardHandler()
 {
     static unsigned char buffer = 0;
-    unsigned char rawcode = inp(0x60);
-    int scancode = rawcode & 0x7F;
+
+    const unsigned char rawcode = inp(0x60);
+    const int scancode = rawcode & 0x7F;
     const bool makeBreak = (rawcode & 0x80) == 0;
 
     if (buffer == 0xe0) { // extended key
