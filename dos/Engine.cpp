@@ -4,7 +4,7 @@
 
 Engine* Engine::sEngine = 0;
 
-void __interrupt (*oldCtrlCISR)() = 0;
+void __interrupt __far (*oldCtrlCISR)() = 0;
 
 static inline void setMode(int mode)
 {
