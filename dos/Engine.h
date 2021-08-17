@@ -11,10 +11,11 @@ public:
 
     bool done() const { return mDone; }
     void process();
+    void cleanup();
 
 private:
     bool mDone;
-    Font mFont;
+    Font mLargeFont, mSmallFont;
 
     static Engine* sEngine;
 

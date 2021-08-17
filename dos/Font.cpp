@@ -5,17 +5,27 @@
 #include <string.h>
 #include <assert.h>
 
-Font::Font(const char* file, unsigned short width, unsigned short height,
-           unsigned short charwidth, unsigned short charheight,
-           unsigned short padrow, const char* charset, bool lowercase)
-    : mWidth(width), mHeight(height),
-      mCharWidth(charwidth), mCharHeight(charheight),
-      mPadRow(padrow), mLow(0), mLowercase(lowercase)
+Font::Font()
+    : mWidth(0), mHeight(0), mCharWidth(0), mCharHeight(0),
+      mPadRow(0), mLow(0), mLowercase(0)
 {
+}
+
+void Font::load(const char* file, unsigned short width, unsigned short height,
+                unsigned short charwidth, unsigned short charheight,
+                unsigned short padrow, const char* charset, bool lowercase)
+{
+    mWidth = width;
+    mHeight = height;
+    mCharWidth = charwidth;
+    mCharHeight = charheight;
+    mPadRow = padrow;
+    mLowercase = lowercase;
+
     FILE* f = fopen(file, "rb");
     if (f == 0)
         return;
-    char buf[512];
+    char buf[128];
     while (!feof(f)) {
         size_t n = fread(buf, 1, sizeof(buf), f);
         if (n > 0) {

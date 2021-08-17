@@ -7,10 +7,12 @@
 class Font
 {
 public:
-    Font(const char* file, unsigned short width, unsigned short height,
-         unsigned short charwidth, unsigned short charheight,
-         unsigned short padrow, const char* charset, bool lowercase);
+    Font();
     ~Font();
+
+    void load(const char* file, unsigned short width, unsigned short height,
+              unsigned short charwidth, unsigned short charheight,
+              unsigned short padrow, const char* charset, bool lowercase);
 
     void drawText(unsigned short x0, unsigned short y0, unsigned short x1, unsigned short y1, unsigned char color, const char* text);
     void drawText(unsigned short x0, unsigned short y0, unsigned short x1, unsigned short y1, unsigned char color, const std::string& text);

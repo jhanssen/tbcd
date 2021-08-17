@@ -11,6 +11,8 @@ int main(int, char**)
             break;
         engine.process();
     }
+    Log::log("engine cleaning up\n");
+    engine.cleanup();
     Log::log("engine done\n");
 
     return 0;

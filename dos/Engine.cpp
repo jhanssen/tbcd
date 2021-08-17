@@ -10,6 +10,7 @@ Engine* Engine::sEngine = 0;
 
 unsigned char normalKeys[MAX_SCAN_CODES] = { 0 };
 unsigned char extendedKeys[MAX_SCAN_CODES] = { 0 };
+unsigned int currentMode = 0;
 
 void __interrupt __far (*oldCtrlCISR)() = 0;
 void __interrupt __far (*oldCtrlBrkISR)() = 0;
@@ -32,11 +33,16 @@ inline void waitForVSync()
 
 static inline void setMode(int mode)
 {
+    if (mode == currentMode)
+        return;
+
     union REGS regs;
 
     regs.h.ah = 0x00;
     regs.h.al = mode;
     int86(0x10, &regs, &regs);
+
+    currentMode = mode;
 }
 
 static void __interrupt __far ctrlCHandler()
@@ -75,11 +81,11 @@ static void __interrupt __far keyboardHandler()
 }
 
 Engine::Engine()
-    : mDone(false),
-      // mFont("font\\large.bin", 28, 44, 1, 14, 1, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`{|}~", false)
-      mFont("font\\small.bin", 16, 48, 1, 8, 0, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", true)
+    : mDone(false)
 {
-    if (!mFont.isValid()) {
+    mLargeFont.load("font\\large.bin", 28, 44, 1, 14, 1, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`{|}~", false);
+    mSmallFont.load("font\\small.bin", 16, 48, 1, 8, 0, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", true);
+    if (!mLargeFont.isValid() || !mSmallFont.isValid()) {
         mDone = true;
         return;
     }
@@ -104,7 +110,11 @@ Engine::Engine()
 Engine::~Engine()
 {
     sEngine = 0;
+    cleanup();
+}
 
+void Engine::cleanup()
+{
     if (oldCtrlCISR != 0) {
         _dos_setvect(0x23, oldCtrlCISR);
         oldCtrlCISR = 0;
@@ -124,8 +134,8 @@ Engine::~Engine()
 void Engine::process()
 {
     waitForVSync();
-    mFont.drawText(10, 10, 100, 100, 4, "0ABabcdtd");
-    mFont.drawText(10, 100, 320, 200, 5, "hello world! the world is blue");
+    mLargeFont.drawText(10, 10, 100, 100, 4, "0ABabcdtd");
+    mSmallFont.drawText(10, 100, 320, 200, 5, "hello world! the world is blue");
 
     // exit if esc is pressed
     if (normalKeys[1] == 1)
