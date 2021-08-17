@@ -77,7 +77,7 @@ static void __interrupt __far keyboardHandler()
 Engine::Engine()
     : mDone(false),
       // mFont("font\\large.bin", 28, 44, 1, 14, 1, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`{|}~", false)
-      mFont("font\\small.bin", 16, 40, 1, 8, 0, "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ `{|}~", false)
+      mFont("font\\small.bin", 16, 48, 1, 8, 0, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", true)
 {
     if (!mFont.isValid()) {
         mDone = true;
