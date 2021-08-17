@@ -140,10 +140,17 @@ void Engine::process()
     clear(254);
 
     mLargeFont.drawText(10, 10, 100, 100, 255, "0ABabcdtd");
-    mSmallFont.drawText(10, 150, 320, 200, 254, "Hello World! the world is blue");
+    mSmallFont.drawText(10, 150, 320, 200, 253, "Hello World! the world is blue");
 
     if (!mImage.empty()) {
-        mImage->draw(200, 10);
+        static unsigned short y = 10;
+        static signed short ydir = 1;
+        if (y == 10 && ydir == -1)
+            ydir = 1;
+        if (y == 100 && ydir == 1)
+            ydir = -1;
+        mImage->draw(200, y);
+        y += (2 * ydir);
     }
 
     mScreen.flip();

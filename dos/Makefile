@@ -33,7 +33,7 @@ SOURCES_CPP=$(addprefix $(DSTDIR)/, $(patsubst %.cpp, %.cpp.o, $(shell find $(SR
 SOURCES_C=$(addprefix $(DSTDIR)/, $(patsubst %.c, %.c.o, $(shell find $(SRCDIR) -name "*.c")))
 
 COMPILE_FLAGS := -bt=dos -w3 -zq -d+ -2 -ox -mc
-CXX_FLAGS := $(COMPILE_FLAGS) -xs
+CXX_FLAGS := $(COMPILE_FLAGS)
 C_FLAGS := $(COMPILE_FLAGS) -za99
 LINK_FLAGS := -bdos -mcmodel=c
 

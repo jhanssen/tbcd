@@ -202,31 +202,9 @@ Ref<Decoder::Image> Decoder::decode(const unsigned char* data, size_t size)
 
 Ref<Decoder::Image> Decoder::decode(const char* file)
 {
-    FILE* f = fopen(file, "rb");
-    if (f == 0)
+    Ref<U8Buffer> buffer = readFile(file);
+    if (!buffer)
         return Ref<Decoder::Image>();
-
-    enum { DataIncrement = 16384 };
-    int datasize = DataIncrement;
-    int datacur = 0;
-    unsigned char* data = (unsigned char*)malloc(datasize);
-
-    char buf[128];
-    while (!feof(f)) {
-        size_t n = fread(buf, 1, sizeof(buf), f);
-        if (n > 0) {
-            if (datacur + n >= datasize) {
-                // realloc
-                data = (unsigned char*)realloc(data, datasize + DataIncrement);
-                datasize += DataIncrement;
-            }
-            memcpy(data + datacur, buf, n);
-            datacur += n;
-        }
-    }
-    fclose(f);
-
-    Ref<Decoder::Image> ret = decode(data, datacur);
-    free(data);
+    Ref<Decoder::Image> ret = decode(buffer->ptr(), buffer->size());
     return ret;
 }
