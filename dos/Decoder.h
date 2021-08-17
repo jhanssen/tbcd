@@ -23,6 +23,9 @@ public:
     private:
         Image(unsigned short w, unsigned short h, unsigned char* d, unsigned short nc, unsigned char* p);
 
+        Image(const Image&);
+        Image& operator=(const Image&);
+
         friend class Decoder;
     };
 

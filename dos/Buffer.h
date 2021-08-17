@@ -18,6 +18,10 @@ public:
     void realloc(int newsize);
 
 private:
+    Buffer(const Buffer&);
+    Buffer& operator=(const Buffer&);
+
+private:
     T* mPtr;
     int mSize;
 };
