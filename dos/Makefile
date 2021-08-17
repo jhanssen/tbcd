@@ -18,7 +18,7 @@ ifeq (,$(wildcard $(CC)))
   $(error No compiler executable found)
 endif
 
-SUBDIRS=serial
+SUBDIRS=serial gif
 
 $(shell mkdir -p $(DSTDIR))
 $(foreach sub,$(SUBDIRS),$(shell mkdir -p $(DSTDIR)/$(sub)))
