@@ -1,6 +1,7 @@
 #include "Engine.h"
 #include "Decoder.h"
 #include "Log.h"
+#include "Utils.h"
 #include <conio.h>
 #include <dos.h>
 #include <serial.h>
@@ -111,6 +112,7 @@ Engine::Engine()
     _dos_setvect(0x9, keyboardHandler);
 
     setMode(0x13);
+    reservePalette();
 
     if (!mImage.empty()) {
         mImage->applyPalette();
