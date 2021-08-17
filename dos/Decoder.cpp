@@ -1,5 +1,6 @@
 #include "Decoder.h"
 #include "Log.h"
+#include "Screen.h"
 #include "Utils.h"
 #include <gif_lib.h>
 #include <stdio.h>
@@ -46,7 +47,7 @@ void Decoder::Image::draw(unsigned short x, unsigned short y)
 {
     if (x >= 320 || y >= 200)
         return;
-    unsigned char far* VGA = (unsigned char far*)0xA0000000L;
+    unsigned char* VGA = Screen::screen()->ptr();
     const unsigned short endy = std::min<unsigned short>(200, y + height);
     const unsigned short endx = std::min<unsigned short>(320, x + width);
     for (unsigned short line = y; line < endy; ++line) {

@@ -3,6 +3,7 @@
 
 #include "Font.h"
 #include "Decoder.h"
+#include "Screen.h"
 
 class Engine
 {
@@ -18,6 +19,7 @@ private:
     bool mDone;
     Font mLargeFont, mSmallFont;
     Ref<Decoder::Image> mImage;
+    Screen mScreen;
 
     static Engine* sEngine;
 

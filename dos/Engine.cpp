@@ -2,9 +2,10 @@
 #include "Decoder.h"
 #include "Log.h"
 #include "Utils.h"
+#include <serial.h>
 #include <conio.h>
 #include <dos.h>
-#include <serial.h>
+#include <string.h>
 
 Engine* Engine::sEngine = 0;
 
@@ -18,21 +19,6 @@ void __interrupt __far (*oldCtrlCISR)() = 0;
 void __interrupt __far (*oldCtrlBrkISR)() = 0;
 void __interrupt __far (*oldKeyboardISR)() = 0;
 
-inline void waitForVSync()
-{
-    _asm {
-        mov dx, 0x3DA
-      l1:
-        in al, dx
-        and al, 0x08
-        jnz l1
-      l2:
-        in al, dx
-        and al, 0x08
-        jz l2
-    }
-}
-
 static inline void setMode(int mode)
 {
     if (mode == currentMode)
@@ -45,6 +31,12 @@ static inline void setMode(int mode)
     int86(0x10, &regs, &regs);
 
     currentMode = mode;
+}
+
+static void clear(unsigned char color)
+{
+    unsigned char* VGA = Screen::screen()->ptr();
+    memset(VGA, color, 320 * 200);
 }
 
 static void __interrupt __far ctrlCHandler()
@@ -145,13 +137,16 @@ void Engine::cleanup()
 
 void Engine::process()
 {
-    waitForVSync();
+    clear(254);
+
     mLargeFont.drawText(10, 10, 100, 100, 255, "0ABabcdtd");
     mSmallFont.drawText(10, 150, 320, 200, 254, "Hello World! the world is blue");
 
     if (!mImage.empty()) {
         mImage->draw(200, 10);
     }
+
+    mScreen.flip();
 
     // exit if esc is pressed
     if (normalKeys[1] == 1)
