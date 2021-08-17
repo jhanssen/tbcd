@@ -15,8 +15,6 @@
 #include <stdlib.h>
 #if defined (__MSDOS__) && !defined(__DJGPP__) && !defined(__GNUC__)
 #include <io.h>
-#include <alloc.h>
-#include <sys\stat.h>
 #else
 #include <sys/types.h>
 #include <sys/stat.h>
