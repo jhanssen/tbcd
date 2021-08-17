@@ -142,22 +142,56 @@ void Engine::cleanup()
     setMode(0x3);
 }
 
+struct BoxAnimation
+{
+    BoxAnimation();
+
+    void reset();
+    void draw(const Ref<Decoder::Image>& image);
+
+    unsigned short y;
+    signed short ydir;
+    unsigned char skip;
+    unsigned char cur;
+};
+
+BoxAnimation::BoxAnimation()
+    : y(0), ydir(0), skip(0), cur(0)
+{
+    reset();
+}
+
+inline void BoxAnimation::reset()
+{
+    y = 10;
+    ydir = 1;
+    skip = 10;
+    cur = 0;
+}
+
+inline void BoxAnimation::draw(const Ref<Decoder::Image>& image)
+{
+    if (++cur == skip) {
+        if (ydir == 1) {
+            fillRect(200, y - 1, image->width, 1, 254);
+        } else {
+            fillRect(200, y + image->height, image->width, 1, 254);
+        }
+        if (y == 10 && ydir == -1)
+            ydir = 1;
+        if (y == 20 && ydir == 1)
+            ydir = -1;
+        image->draw(200, y);
+        y += (1 * ydir);
+        cur = 0;
+    }
+}
+
 void Engine::process()
 {
     if (!mImage.empty()) {
-        static unsigned short y = 10;
-        static signed short ydir = 1;
-        if (y == 10 && ydir == -1)
-            ydir = 1;
-        if (y == 100 && ydir == 1)
-            ydir = -1;
-        if (ydir == 1) {
-            fillRect(200, y - 2, mImage->width, 2, 254);
-        } else {
-            fillRect(200, y + mImage->height, mImage->width, 2, 254);
-        }
-        mImage->draw(200, y);
-        y += (2 * ydir);
+        static BoxAnimation animation;
+        animation.draw(mImage);
     }
 
     mScreen.flip();

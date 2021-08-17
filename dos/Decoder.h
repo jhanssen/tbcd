@@ -17,8 +17,8 @@ public:
         unsigned short numColors;
         unsigned char* palette;
 
-        void applyPalette();
-        void draw(unsigned short x, unsigned short y);
+        void applyPalette() const;
+        void draw(unsigned short x, unsigned short y) const;
 
     private:
         Image(unsigned short w, unsigned short h, unsigned char* d, unsigned short nc, unsigned char* p);

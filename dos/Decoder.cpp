@@ -43,7 +43,7 @@ Decoder::Image::~Image()
         free(palette);
 }
 
-void Decoder::Image::draw(unsigned short x, unsigned short y)
+void Decoder::Image::draw(unsigned short x, unsigned short y) const
 {
     if (x >= 320 || y >= 200)
         return;
@@ -55,7 +55,7 @@ void Decoder::Image::draw(unsigned short x, unsigned short y)
     }
 }
 
-void Decoder::Image::applyPalette()
+void Decoder::Image::applyPalette() const
 {
     outp(0x3c8, 0);
     unsigned short j = 0;
