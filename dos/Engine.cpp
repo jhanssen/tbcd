@@ -114,7 +114,7 @@ Engine::Engine()
     setMode(0x13);
     reservePalette();
 
-    if (!mImage.empty()) {
+    if (mImage) {
         mImage->applyPalette();
     }
 }

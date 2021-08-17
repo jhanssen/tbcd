@@ -13,6 +13,7 @@ public:
     Ref& operator=(const Ref& ref);
 
     bool empty() const;
+    operator bool() const;
 
     T* operator->();
     const T* operator->() const;
@@ -59,7 +60,7 @@ inline Ref<T>::~Ref()
 }
 
 template<typename T>
-Ref<T>& Ref<T>::operator=(const Ref& ref)
+inline Ref<T>& Ref<T>::operator=(const Ref& ref)
 {
     if (mData && !--mData->count) {
         delete mData->item;
@@ -73,9 +74,15 @@ Ref<T>& Ref<T>::operator=(const Ref& ref)
 }
 
 template<typename T>
-bool Ref<T>::empty() const
+inline bool Ref<T>::empty() const
 {
     return mData == 0;
+}
+
+template<typename T>
+inline Ref<T>::operator bool() const
+{
+    return mData != 0;
 }
 
 template<typename T>
