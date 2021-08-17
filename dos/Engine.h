@@ -2,6 +2,7 @@
 #define ENGINE_H
 
 #include "Font.h"
+#include "Decoder.h"
 
 class Engine
 {
@@ -16,6 +17,7 @@ public:
 private:
     bool mDone;
     Font mLargeFont, mSmallFont;
+    Ref<Decoder::Data> mImage;
 
     static Engine* sEngine;
 

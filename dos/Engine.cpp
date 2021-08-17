@@ -1,4 +1,5 @@
 #include "Engine.h"
+#include "Decoder.h"
 #include "Log.h"
 #include <conio.h>
 #include <dos.h>
@@ -90,6 +91,11 @@ Engine::Engine()
         return;
     }
 
+    mImage = Decoder::decode("TEST2.GIF");
+    if (!mImage.empty()) {
+        Log::log("decoded %hu %hu\n", mImage->width, mImage->height);
+    }
+
     sEngine = this;
 
     // setup ctrl-c handler
@@ -105,6 +111,10 @@ Engine::Engine()
     _dos_setvect(0x9, keyboardHandler);
 
     setMode(0x13);
+
+    if (!mImage.empty()) {
+        mImage->applyPalette();
+    }
 }
 
 Engine::~Engine()
@@ -134,8 +144,12 @@ void Engine::cleanup()
 void Engine::process()
 {
     waitForVSync();
-    mLargeFont.drawText(10, 10, 100, 100, 4, "0ABabcdtd");
-    mSmallFont.drawText(10, 100, 320, 200, 5, "hello world! the world is blue");
+    mLargeFont.drawText(10, 10, 100, 100, 255, "0ABabcdtd");
+    mSmallFont.drawText(10, 150, 320, 200, 254, "Hello World! the world is blue");
+
+    if (!mImage.empty()) {
+        mImage->draw(200, 10);
+    }
 
     // exit if esc is pressed
     if (normalKeys[1] == 1)

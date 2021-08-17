@@ -75,7 +75,7 @@ Font::~Font()
 void Font::drawText(unsigned short x0, unsigned short y0, unsigned short x1, unsigned short y1, unsigned char color, const char* text)
 {
     // draw line by line?
-    unsigned char far *VGA = (unsigned char far*)0xA0000000L;
+    unsigned char far* VGA = (unsigned char far*)0xA0000000L;
     const unsigned short xmax = std::min<unsigned short>(x1, 320);
     const unsigned short ymax = std::min<unsigned short>(y1, 200);
     for (unsigned short y = y0; y < ymax; ++y) {

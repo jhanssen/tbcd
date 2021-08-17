@@ -101,23 +101,8 @@ typedef enum {
     TERMINATE_RECORD_TYPE   /* Begin with ';' */
 } GifRecordType;
 
-/* DumpScreen2Gif routine constants identify type of window/screen to dump.
- * Note all values below 1000 are reserved for the IBMPC different display
- * devices (it has many!) and are compatible with the numbering TC2.0
- * (Turbo C 2.0 compiler for IBM PC) gives to these devices.
- */
-typedef enum {
-    GIF_DUMP_SGI_WINDOW = 1000,
-    GIF_DUMP_X_WINDOW = 1001
-} GifScreenDumpType;
-
 /* func type to read gif data from arbitrary sources (TVT) */
 typedef int (*InputFunc) (GifFileType *, GifByteType *, int);
-
-/* func type to write gif data ro arbitrary targets.
- * Returns count of bytes written. (MRB)
- */
-typedef int (*OutputFunc) (GifFileType *, const GifByteType *, int);
 
 /******************************************************************************
  *  GIF89 extension function codes                                             
