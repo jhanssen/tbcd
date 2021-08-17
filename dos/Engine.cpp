@@ -75,7 +75,9 @@ static void __interrupt __far keyboardHandler()
 }
 
 Engine::Engine()
-    : mDone(false), mFont("font\\bitmap.bin", 28, 44, 1, 14, 1, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`{|}~")
+    : mDone(false),
+      // mFont("font\\large.bin", 28, 44, 1, 14, 1, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`{|}~", false)
+      mFont("font\\small.bin", 16, 40, 1, 8, 0, "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ `{|}~", false)
 {
     if (!mFont.isValid()) {
         mDone = true;
@@ -122,7 +124,8 @@ Engine::~Engine()
 void Engine::process()
 {
     waitForVSync();
-    mFont.drawText(10, 10, 100, 100, 4, "0abcd");
+    mFont.drawText(10, 10, 100, 100, 4, "0ABabcdtd");
+    mFont.drawText(10, 100, 320, 200, 5, "hello world! the world is blue");
 
     // exit if esc is pressed
     if (normalKeys[1] == 1)

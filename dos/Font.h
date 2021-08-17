@@ -9,7 +9,7 @@ class Font
 public:
     Font(const char* file, unsigned short width, unsigned short height,
          unsigned short charwidth, unsigned short charheight,
-         unsigned short padrow, const char* charset);
+         unsigned short padrow, const char* charset, bool lowercase);
     ~Font();
 
     void drawText(unsigned short x0, unsigned short y0, unsigned short x1, unsigned short y1, unsigned char color, const char* text);
@@ -23,6 +23,7 @@ private:
     unsigned short mWidth, mHeight, mCharWidth, mCharHeight;
     unsigned short mPadLeft, mPadTop, mPadRow;
     unsigned char mLow;
+    bool mLowercase;
 };
 
 inline void Font::drawText(unsigned short x0, unsigned short y0, unsigned short x1, unsigned short y1, unsigned char color, const std::string& text)

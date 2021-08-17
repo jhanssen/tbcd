@@ -7,12 +7,12 @@
 
 Font::Font(const char* file, unsigned short width, unsigned short height,
            unsigned short charwidth, unsigned short charheight,
-           unsigned short padrow, const char* charset)
+           unsigned short padrow, const char* charset, bool lowercase)
     : mWidth(width), mHeight(height),
       mCharWidth(charwidth), mCharHeight(charheight),
-      mPadRow(padrow), mLow(0)
+      mPadRow(padrow), mLow(0), mLowercase(lowercase)
 {
-    FILE* f = fopen(file, "r");
+    FILE* f = fopen(file, "rb");
     if (f == 0)
         return;
     char buf[512];
@@ -75,7 +75,7 @@ void Font::drawText(unsigned short x0, unsigned short y0, unsigned short x1, uns
         const char* cur = text;
         while (*cur != '\0') {
             char curchar = *cur;
-            if (curchar >= 97 && curchar <= 122) {
+            if (!mLowercase && curchar >= 97 && curchar <= 122) {
                 // convert a-z to A-Z
                 curchar -= 32;
             }
