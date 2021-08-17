@@ -37,6 +37,8 @@ inline void Screen::flip() const
 {
     // wait for vsync
     _asm {
+        push ax
+        push dx
         mov dx, 0x3DA
       l1:
         in al, dx
@@ -46,6 +48,8 @@ inline void Screen::flip() const
         in al, dx
         and al, 0x08
         jz l2
+        pop dx
+        pop ax
     }
 
     unsigned char far* VGA = (unsigned char far*)0xA0000000L;
