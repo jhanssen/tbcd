@@ -104,7 +104,14 @@ Engine::Engine()
     _dos_setvect(0x9, keyboardHandler);
 
     setMode(0x13);
+
+    wait(10);
+
     reservePalette();
+    clear(254);
+
+    mLargeFont.drawText(10, 10, 100, 100, 255, "0ABabcdtd");
+    mSmallFont.drawText(10, 150, 320, 200, 253, "Hello World! the world is blue");
 
     if (mImage) {
         mImage->applyPalette();
@@ -137,11 +144,6 @@ void Engine::cleanup()
 
 void Engine::process()
 {
-    clear(254);
-
-    mLargeFont.drawText(10, 10, 100, 100, 255, "0ABabcdtd");
-    mSmallFont.drawText(10, 150, 320, 200, 253, "Hello World! the world is blue");
-
     if (!mImage.empty()) {
         static unsigned short y = 10;
         static signed short ydir = 1;
@@ -149,6 +151,11 @@ void Engine::process()
             ydir = 1;
         if (y == 100 && ydir == 1)
             ydir = -1;
+        if (ydir == 1) {
+            fillRect(200, y - 2, mImage->width, 2, 254);
+        } else {
+            fillRect(200, y + mImage->height, mImage->width, 2, 254);
+        }
         mImage->draw(200, y);
         y += (2 * ydir);
     }

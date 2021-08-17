@@ -1,4 +1,5 @@
 #include "Utils.h"
+#include "Screen.h"
 #include <conio.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,6 +29,14 @@ Ref<U8Buffer> readFile(const char* file)
     return Ref<U8Buffer>(new U8Buffer(data, datacur));
 }
 
+void wait(int ticks)
+{
+    unsigned short* CLOCK = (unsigned short*)0x0000046C;
+    const unsigned short start = *CLOCK;
+    while (*CLOCK - start < ticks)
+        ;
+}
+
 void reservePalette()
 {
     // reserve the last few colors for ourselves
@@ -49,5 +58,15 @@ void reservePalette()
         outp(0x3c9, self[255 - n].r >> 2);
         outp(0x3c9, self[255 - n].g >> 2);
         outp(0x3c9, self[255 - n].b >> 2);
+    }
+}
+
+void fillRect(unsigned short x, unsigned short y,
+              unsigned short w, unsigned short h,
+              unsigned char c)
+{
+    unsigned char* VGA = Screen::screen()->ptr();
+    for (unsigned short yy = y; yy < y + h; ++yy) {
+        memset(VGA + (yy * 320) + x, c, w);
     }
 }
