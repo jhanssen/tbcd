@@ -29,12 +29,12 @@ static int readGif(GifFileType* file, GifByteType* bytes, int len)
     return num;
 }
 
-Decoder::Data::Data(unsigned short w, unsigned short h, unsigned char* d, unsigned short nc, unsigned char* p)
+Decoder::Image::Image(unsigned short w, unsigned short h, unsigned char* d, unsigned short nc, unsigned char* p)
     : width(w), height(h), data(d), numColors(nc), palette(p)
 {
 }
 
-Decoder::Data::~Data()
+Decoder::Image::~Image()
 {
     if (data)
         free(data);
@@ -42,7 +42,7 @@ Decoder::Data::~Data()
         free(palette);
 }
 
-void Decoder::Data::draw(unsigned short x, unsigned short y)
+void Decoder::Image::draw(unsigned short x, unsigned short y)
 {
     if (x >= 320 || y >= 200)
         return;
@@ -54,7 +54,7 @@ void Decoder::Data::draw(unsigned short x, unsigned short y)
     }
 }
 
-void Decoder::Data::applyPalette()
+void Decoder::Image::applyPalette()
 {
     outp(0x3c8, 0);
     unsigned short j = 0;
@@ -72,12 +72,12 @@ void Decoder::Data::applyPalette()
     reservePalette();
 }
 
-Ref<Decoder::Data> Decoder::decode(const unsigned char* data, size_t size)
+Ref<Decoder::Image> Decoder::decode(const unsigned char* data, size_t size)
 {
     GifData gdata = { data, size, 0 };
     GifFileType* file = DGifOpen(&gdata, readGif);
     if (file == 0) {
-        return Ref<Decoder::Data>();
+        return Ref<Decoder::Image>();
     }
 
     int i;
@@ -88,13 +88,13 @@ Ref<Decoder::Data> Decoder::decode(const unsigned char* data, size_t size)
     unsigned char* lines = (unsigned char*)malloc(swidth * sheight);
     if (!lines) {
         DGifCloseFile(file);
-        return Ref<Decoder::Data>();
+        return Ref<Decoder::Image>();
     }
     unsigned char* palette = (unsigned char*)malloc(768);
     if (!palette) {
         DGifCloseFile(file);
         free(lines);
-        return Ref<Decoder::Data>();
+        return Ref<Decoder::Image>();
     }
 
     // set to background color
@@ -113,7 +113,7 @@ Ref<Decoder::Data> Decoder::decode(const unsigned char* data, size_t size)
             DGifCloseFile(file);
             free(lines);
             free(palette);
-            return Ref<Decoder::Data>();
+            return Ref<Decoder::Image>();
         }
 
         switch (record) {
@@ -122,14 +122,14 @@ Ref<Decoder::Data> Decoder::decode(const unsigned char* data, size_t size)
                 DGifCloseFile(file);
                 free(lines);
                 free(palette);
-                return Ref<Decoder::Data>();
+                return Ref<Decoder::Image>();
             }
             if (file->Image.Left + file->Image.Width > swidth ||
                 file->Image.Top + file->Image.Height > sheight) {
                 DGifCloseFile(file);
                 free(lines);
                 free(palette);
-                return Ref<Decoder::Data>();
+                return Ref<Decoder::Image>();
             }
 
             j = 0;
@@ -154,7 +154,7 @@ Ref<Decoder::Data> Decoder::decode(const unsigned char* data, size_t size)
                             DGifCloseFile(file);
                             free(lines);
                             free(palette);
-                            return Ref<Decoder::Data>();
+                            return Ref<Decoder::Image>();
                         }
                     }
                 }
@@ -165,26 +165,26 @@ Ref<Decoder::Data> Decoder::decode(const unsigned char* data, size_t size)
                         DGifCloseFile(file);
                         free(lines);
                         free(palette);
-                        return Ref<Decoder::Data>();
+                        return Ref<Decoder::Image>();
                     }
                 }
             }
 
             DGifCloseFile(file);
-            return Ref<Decoder::Data>(new Decoder::Data(swidth, sheight, lines, numColors, palette));
+            return Ref<Decoder::Image>(new Decoder::Image(swidth, sheight, lines, numColors, palette));
         case EXTENSION_RECORD_TYPE:
             if (DGifGetExtension(file, &extcode, &extension) == GIF_ERROR) {
                 DGifCloseFile(file);
                 free(lines);
                 free(palette);
-                return Ref<Decoder::Data>();
+                return Ref<Decoder::Image>();
             }
             while (extension != 0) {
                 if (DGifGetExtensionNext(file, &extension) == GIF_ERROR) {
                     DGifCloseFile(file);
                     free(lines);
                     free(palette);
-                    return Ref<Decoder::Data>();
+                    return Ref<Decoder::Image>();
                 }
             }
             break;
@@ -196,14 +196,14 @@ Ref<Decoder::Data> Decoder::decode(const unsigned char* data, size_t size)
     DGifCloseFile(file);
     free(lines);
     free(palette);
-    return Ref<Decoder::Data>();
+    return Ref<Decoder::Image>();
 }
 
-Ref<Decoder::Data> Decoder::decode(const char* file)
+Ref<Decoder::Image> Decoder::decode(const char* file)
 {
     FILE* f = fopen(file, "rb");
     if (f == 0)
-        return Ref<Decoder::Data>();
+        return Ref<Decoder::Image>();
 
     enum { DataIncrement = 16384 };
     int datasize = DataIncrement;
@@ -225,7 +225,7 @@ Ref<Decoder::Data> Decoder::decode(const char* file)
     }
     fclose(f);
 
-    Ref<Decoder::Data> ret = decode(data, datacur);
+    Ref<Decoder::Image> ret = decode(data, datacur);
     free(data);
     return ret;
 }

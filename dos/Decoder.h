@@ -6,10 +6,10 @@
 class Decoder
 {
 public:
-    class Data
+    class Image
     {
     public:
-        ~Data();
+        ~Image();
 
         unsigned short width, height;
         unsigned char* data;
@@ -21,13 +21,13 @@ public:
         void draw(unsigned short x, unsigned short y);
 
     private:
-        Data(unsigned short w, unsigned short h, unsigned char* d, unsigned short nc, unsigned char* p);
+        Image(unsigned short w, unsigned short h, unsigned char* d, unsigned short nc, unsigned char* p);
 
         friend class Decoder;
     };
 
-    static Ref<Data> decode(const char* file);
-    static Ref<Data> decode(const unsigned char* data, unsigned int size);
+    static Ref<Image> decode(const char* file);
+    static Ref<Image> decode(const unsigned char* data, unsigned int size);
 };
 
 #endif

@@ -17,7 +17,7 @@ public:
 private:
     bool mDone;
     Font mLargeFont, mSmallFont;
-    Ref<Decoder::Data> mImage;
+    Ref<Decoder::Image> mImage;
 
     static Engine* sEngine;
 
