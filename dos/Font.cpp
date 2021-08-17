@@ -68,12 +68,13 @@ Font::~Font()
 
 void Font::drawText(unsigned short x0, unsigned short y0, unsigned short x1, unsigned short y1, unsigned char color, const char* text)
 {
-    // draw line by line?
     unsigned char* VGA = Screen::screen()->ptr();
     unsigned char* buffer = mBuffer->ptr();
     unsigned short* glyphOffsets = mGlyphOffsets.ptr();
     const unsigned short xmax = std::min<unsigned short>(x1, 320);
     const unsigned short ymax = std::min<unsigned short>(y1, 200);
+#if 0
+    // draw line by line?
     for (unsigned short y = y0; y < ymax; ++y) {
         if (y - y0 >= mCharHeight)
             break;
@@ -103,4 +104,34 @@ void Font::drawText(unsigned short x0, unsigned short y0, unsigned short x1, uns
             ++cur;
         }
     }
+#else
+    unsigned short x = x0;
+    const char* cur = text;
+    while (*cur != '\0') {
+        char curchar = *cur;
+        if (!mLowercase && curchar >= 97 && curchar <= 122) {
+            // convert a-z to A-Z
+            curchar -= 32;
+        }
+        const unsigned short goffset = glyphOffsets[curchar - mLow];
+        for (unsigned short y = y0; y < ymax; ++y) {
+            if (y - y0 >= mCharHeight)
+                break;
+            for (unsigned short boff = 0; boff < mCharWidth; ++boff) {
+                const unsigned char pp = buffer[(goffset + ((y - y0) * mWidth)) + boff];
+                for (unsigned char ip = 0; ip < 8; ++ip) {
+                    if (pp & (1 << (7 - ip))) {
+                        VGA[320 * y + x + ip] = color;
+                    }
+                }
+            }
+        }
+
+        x += (mCharWidth * 8) + 1;
+        if (x >= xmax)
+            break;
+
+        ++cur;
+    }
+#endif
 }
