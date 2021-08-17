@@ -106,6 +106,7 @@ void Font::drawText(unsigned short x0, unsigned short y0, unsigned short x1, uns
     }
 #else
     unsigned short x = x0;
+    const unsigned short expand = mCharWidth * 8;
     const char* cur = text;
     while (*cur != '\0') {
         char curchar = *cur;
@@ -119,15 +120,26 @@ void Font::drawText(unsigned short x0, unsigned short y0, unsigned short x1, uns
                 break;
             for (unsigned short boff = 0; boff < mCharWidth; ++boff) {
                 const unsigned char pp = buffer[(goffset + ((y - y0) * mWidth)) + boff];
-                for (unsigned char ip = 0; ip < 8; ++ip) {
-                    if (pp & (1 << (7 - ip))) {
-                        VGA[320 * y + x + ip] = color;
-                    }
-                }
+                if (pp & 128)
+                    VGA[320 * y + x] = color;
+                if (pp & 64)
+                    VGA[320 * y + x + 1] = color;
+                if (pp & 32)
+                    VGA[320 * y + x + 2] = color;
+                if (pp & 16)
+                    VGA[320 * y + x + 3] = color;
+                if (pp & 8)
+                    VGA[320 * y + x + 4] = color;
+                if (pp & 4)
+                    VGA[320 * y + x + 5] = color;
+                if (pp & 2)
+                    VGA[320 * y + x + 6] = color;
+                if (pp & 1)
+                    VGA[320 * y + x + 7] = color;
             }
         }
 
-        x += (mCharWidth * 8) + 1;
+        x += expand + 1;
         if (x >= xmax)
             break;
 
