@@ -20,6 +20,7 @@ void Connection::open(SerialPort::ComPort com)
 void Connection::requestItems()
 {
     mSerial.write("it\0", 3);
+    mTopItem = 0;
     mItems.clear();
 }
 
