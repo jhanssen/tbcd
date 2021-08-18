@@ -19,6 +19,15 @@ void __interrupt __far (*oldCtrlCISR)() = 0;
 void __interrupt __far (*oldCtrlBrkISR)() = 0;
 void __interrupt __far (*oldKeyboardISR)() = 0;
 
+enum {
+    BackgroundColor = 254,
+    BoxshotLeft = 200,
+    BoxshotTop = 10,
+    BoxshotBottom = 20,
+    BoxshotShift = 1,
+    BoxshotDelay = 10
+};
+
 static inline void setMode(int mode)
 {
     if (mode == currentMode)
@@ -108,7 +117,7 @@ Engine::Engine()
     wait(10);
 
     reservePalette();
-    clear(254);
+    clear(BackgroundColor);
 
     mLargeFont.drawText(10, 10, 100, 100, 255, "0ABabcdtd");
     mSmallFont.drawText(10, 150, 320, 200, 253, "Hello World! the world is blue");
@@ -151,38 +160,36 @@ struct BoxAnimation
 
     unsigned short y;
     signed short ydir;
-    unsigned char skip;
     unsigned char cur;
 };
 
 BoxAnimation::BoxAnimation()
-    : y(0), ydir(0), skip(0), cur(0)
+    : y(0), ydir(0), cur(0)
 {
     reset();
 }
 
 inline void BoxAnimation::reset()
 {
-    y = 10;
+    y = BoxshotTop;
     ydir = 1;
-    skip = 10;
     cur = 0;
 }
 
 inline void BoxAnimation::draw(const Ref<Decoder::Image>& image)
 {
-    if (++cur == skip) {
+    if (++cur == BoxshotDelay) {
         if (ydir == 1) {
-            fillRect(200, y - 1, image->width, 1, 254);
+            fillRect(BoxshotLeft, y - BoxshotShift, image->width, BoxshotShift, BackgroundColor);
         } else {
-            fillRect(200, y + image->height, image->width, 1, 254);
+            fillRect(BoxshotLeft, y + image->height, image->width, BoxshotShift, BackgroundColor);
         }
-        if (y == 10 && ydir == -1)
+        if (y == BoxshotTop && ydir == -1)
             ydir = 1;
-        if (y == 20 && ydir == 1)
+        if (y == BoxshotBottom && ydir == 1)
             ydir = -1;
-        image->draw(200, y);
-        y += (1 * ydir);
+        image->draw(BoxshotLeft, y);
+        y += (BoxshotShift * ydir);
         cur = 0;
     }
 }
