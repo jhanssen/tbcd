@@ -18,6 +18,9 @@ public:
     T* operator->();
     const T* operator->() const;
 
+    T& operator*();
+    const T& operator*() const;
+
     T* release();
     void reset();
 
@@ -120,6 +123,18 @@ template<typename T>
 inline const T* Ref<T>::operator->() const
 {
     return mData->item;
+}
+
+template<typename T>
+T& Ref<T>::operator*()
+{
+    return *mData->item;
+}
+
+template<typename T>
+const T& Ref<T>::operator*() const
+{
+    return *mData->item;
 }
 
 #endif

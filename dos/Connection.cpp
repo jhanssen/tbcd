@@ -3,7 +3,7 @@
 #include <assert.h>
 
 Connection::Connection(SerialPort::ComPort com)
-    : mTopItem(0), mTopImage(0), mTopCurrentItem(0), mReadOffset(0)
+    : mTopItem(0), mReadOffset(0)
 {
     mSerial.open(com);
 }
@@ -20,6 +20,7 @@ void Connection::open(SerialPort::ComPort com)
 void Connection::requestItems()
 {
     mSerial.write("it\0", 3);
+    mItems.clear();
 }
 
 void Connection::requestImage(const std::string& item)
@@ -27,11 +28,13 @@ void Connection::requestImage(const std::string& item)
     mSerial.write("im", 2);
     // include the \0 terminate
     mSerial.write(item.c_str(), item.size() + 1);
+    mImage.reset();
 }
 
 void Connection::requestCurrentItem()
 {
     mSerial.write("ci\0", 3);
+    mCurrentItem.reset();
 }
 
 void Connection::setCurrentItem(const std::string& item)
@@ -88,7 +91,7 @@ bool Connection::parseMessage()
         if (fe != -1) {
             Ref<CBuffer> item(new CBuffer);
             item->append((const char*)(ptr + 2), fe - 2);
-            mCurrentItems.push(item);
+            mCurrentItem = item;
 
             mReadOffset += fe + 1;
             return true;
@@ -110,7 +113,7 @@ bool Connection::parseMessage()
             // looks like we have all the bytes we need
             Ref<U8Buffer> image(new U8Buffer);
             image->append(ptr + 4, len);
-            mImages.push(image);
+            mImage = image;
 
             mReadOffset += len + 4;
             return true;
@@ -137,7 +140,7 @@ void Connection::poll(connection::Availability* avails)
             mReadOffset = 0;
         }
     }
-    avails->image = mImages.size() - mTopImage;
     avails->item = mItems.size() - mTopItem;
-    avails->currentItem = mCurrentItems.size() - mTopCurrentItem;
+    avails->image = mImage ? 1 : 0;
+    avails->currentItem = mCurrentItem ? 1 : 0;
 }

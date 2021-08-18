@@ -38,8 +38,8 @@ public:
 
     void poll(connection::Availability* avails);
 
-    Ref<Decoder::Image> nextImage();
     Ref<connection::Item> nextItem();
+    Ref<Decoder::Image> nextImage();
     Ref<CBuffer> nextCurrentItem();
 
 private:
@@ -50,12 +50,8 @@ private:
 
     int mTopItem;
     List<Ref<connection::Item> > mItems;
-
-    int mTopImage;
-    List<Ref<U8Buffer> > mImages;
-
-    int mTopCurrentItem;
-    List<Ref<CBuffer> > mCurrentItems;
+    Ref<U8Buffer> mImage;
+    Ref<CBuffer> mCurrentItem;
 
     int mReadOffset;
     U8Buffer mRead;
@@ -63,11 +59,10 @@ private:
 
 inline Ref<Decoder::Image> Connection::nextImage()
 {
-    if (mTopImage < mImages.size()) {
-        Ref<U8Buffer> image = mImages[mTopImage++];
-        if (mTopImage == mImages.size())
-            mImages.clear();
-        return Decoder::decode(image);
+    if (mImage) {
+        Ref<Decoder::Image> img = Decoder::decode(mImage);
+        mImage.reset();
+        return img;
     }
     return Ref<Decoder::Image>();
 }
@@ -85,11 +80,10 @@ inline Ref<connection::Item> Connection::nextItem()
 
 inline Ref<CBuffer> Connection::nextCurrentItem()
 {
-    if (mTopCurrentItem < mCurrentItems.size()) {
-        Ref<CBuffer> item = mCurrentItems[mTopCurrentItem++];
-        if (mTopCurrentItem == mCurrentItems.size())
-            mCurrentItems.clear();
-        return item;
+    if (mCurrentItem) {
+        Ref<CBuffer> ret = mCurrentItem;
+        mCurrentItem.reset();
+        return ret;
     }
     return Ref<CBuffer>();
 }

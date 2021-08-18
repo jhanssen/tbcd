@@ -118,6 +118,7 @@ inline void Buffer<T>::take(Ref<Buffer>& buffer)
     }
     if (buffer) {
         append(buffer->ptr(), buffer->size());
+        buffer.reset();
     }
 }
 
