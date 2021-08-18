@@ -71,8 +71,10 @@ inline Ref<connection::Item> Connection::nextItem()
 {
     if (mTopItem < mItems.size()) {
         Ref<connection::Item> item = mItems[mTopItem++];
-        if (mTopItem == mItems.size())
+        if (mTopItem == mItems.size()) {
+            mTopItem = 0;
             mItems.clear();
+        }
         return item;
     }
     return Ref<connection::Item>();
