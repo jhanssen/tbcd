@@ -31,6 +31,9 @@ public:
     T& operator[](unsigned int pos);
     const T& operator[](unsigned int pos) const;
 
+    T& at(unsigned int pos);
+    const T& at(unsigned int pos) const;
+
 private:
     void realloc(unsigned int size);
     void copyFrom(const List& other);
@@ -192,6 +195,20 @@ inline T& List<T>::operator[](unsigned int pos)
 
 template<typename T>
 inline const T& List<T>::operator[](unsigned int pos) const
+{
+    assert(pos < mSize);
+    return mData[pos];
+}
+
+template<typename T>
+T& List<T>::at(unsigned int pos)
+{
+    assert(pos < mSize);
+    return mData[pos];
+}
+
+template<typename T>
+const T& List<T>::at(unsigned int pos) const
 {
     assert(pos < mSize);
     return mData[pos];

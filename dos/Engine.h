@@ -25,7 +25,7 @@ private:
     Font mLargeFont, mSmallFont;
     Ref<Decoder::Image> mImage;
     Screen mScreen;
-    List<std::string> mItems;
+    List<std::string>* mItems;
 
     static Engine* sEngine;
 

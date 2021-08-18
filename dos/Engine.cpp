@@ -84,7 +84,7 @@ static void __interrupt __far keyboardHandler()
 }
 
 Engine::Engine()
-    : mDone(false)
+    : mDone(false), mItems(new List<std::string>())
 {
     mLargeFont.load("font\\large.bin", 28, 44, 1, 14, 1, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`{|}~", false);
     mSmallFont.load("font\\small.bin", 16, 48, 1, 8, 0, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", true);
@@ -126,8 +126,8 @@ Engine::Engine()
         mImage->applyPalette();
     }
 
-    mItems.push("foo bar");
-    mItems.push("hello game");
+    mItems->push("foo bar");
+    mItems->push("hello game");
     update();
 }
 
@@ -152,6 +152,9 @@ void Engine::cleanup()
         oldKeyboardISR = 0;
     }
 
+    delete mItems;
+    mItems = 0;
+
     setMode(0x3);
 }
 
@@ -162,8 +165,8 @@ void Engine::update()
     mLargeFont.drawText(10, 10, 100, 100, 255, "0ABabcdtd");
 
     int y = 0;
-    for (unsigned int i = 0; i < mItems.size(); ++i) {
-        mSmallFont.drawText(10, y + 30, 100, y + 40, 253, mItems[i].c_str());
+    for (unsigned int i = 0; i < mItems->size(); ++i) {
+        mSmallFont.drawText(10, y + 30, 100, y + 40, 253, mItems->at(i));
         y += 10;
     }
 }
