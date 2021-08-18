@@ -1,7 +1,7 @@
 import SerialPort from "serialport";
 import EventEmitter from "events";
 import crypto from "crypto";
-import assert from "./assert";
+import assert from "../assert";
 
 export interface Image {
     name: string;
