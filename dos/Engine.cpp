@@ -161,7 +161,7 @@ void Engine::update()
 {
     clear(BackgroundColor);
 
-    mLargeFont.drawText(10, 10, 100, 100, 255, title);
+    mLargeFont.drawText(10, 10, BoxshotLeft - 10, 30, 255, title);
 
     int y = 0;
     for (unsigned int i = 0; i < mItems->size(); ++i) {
