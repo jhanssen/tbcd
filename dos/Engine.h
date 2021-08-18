@@ -22,10 +22,13 @@ private:
 
 private:
     bool mDone;
-    Font mLargeFont, mSmallFont;
+    Font* mLargeFont;
+    Font* mSmallFont;
     Ref<Decoder::Image> mImage;
     Screen mScreen;
     List<std::string>* mItems;
+    unsigned int mHighlighted;
+    int mSelected;
 
     static Engine* sEngine;
 

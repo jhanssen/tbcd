@@ -45,11 +45,12 @@ void reservePalette()
         unsigned char r, g, b;
     };
 
-    Color self[] = {
-        { 5,   5,   5   },
-        { 225, 225, 225 },
-        { 200, 40,  40  },
-        { 40,  40,  200 }
+    const Color self[] = {
+        { 5,   5,   5   }, // black
+        { 225, 225, 225 }, // white
+        { 180, 40,  40  }, // darker red
+        { 225, 180, 180 }, // lighter red
+        { 190, 190, 190 }  // light grey
     };
 
     const unsigned short num = sizeof(self) / sizeof(self[0]);
@@ -61,12 +62,12 @@ void reservePalette()
     }
 }
 
-void fillRect(unsigned short x, unsigned short y,
-              unsigned short w, unsigned short h,
+void fillRect(unsigned short x0, unsigned short y0,
+              unsigned short x1, unsigned short y1,
               unsigned char c)
 {
     unsigned char* VGA = Screen::screen()->ptr();
-    for (unsigned short yy = y; yy < y + h; ++yy) {
-        memset(VGA + (yy * 320) + x, c, w);
+    for (unsigned short yy = y0; yy < y1; ++yy) {
+        memset(VGA + (yy * 320) + x0, c, x1 - x0);
     }
 }

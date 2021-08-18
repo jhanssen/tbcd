@@ -9,8 +9,8 @@ void wait(int ticks);
 
 Ref<U8Buffer> readFile(const char* file);
 
-void fillRect(unsigned short x, unsigned short y,
-              unsigned short w, unsigned short h,
+void fillRect(unsigned short x0, unsigned short y0,
+              unsigned short x1, unsigned short y1,
               unsigned char c);
 
 #endif

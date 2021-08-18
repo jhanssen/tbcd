@@ -23,6 +23,11 @@ const char* title = "TBCD";
 
 enum {
     BackgroundColor = 254,
+    ItemColor = 253,
+    HighlightColor = 252,
+    SelectedItemColor = 251,
+    ItemLeft = 10,
+    ItemTop = 30,
     BoxshotLeft = 230,
     BoxshotTop = 10,
     BoxshotBottom = 20,
@@ -60,6 +65,8 @@ static void __interrupt __far ctrlBrkHandler()
     Engine::sEngine->mDone = true;
 }
 
+// #define LOGKEYS
+
 static void __interrupt __far keyboardHandler()
 {
     static unsigned char buffer = 0;
@@ -69,8 +76,12 @@ static void __interrupt __far keyboardHandler()
     const bool makeBreak = (rawcode & 0x80) == 0;
 
     if (buffer == 0xe0) { // extended key
-        if (scancode < MAX_SCAN_CODES)
+        if (scancode < MAX_SCAN_CODES) {
+#ifdef LOGKEYS
+            Log::log("extended 0x%x %d\n", scancode, makeBreak);
+#endif
             extendedKeys[scancode] = makeBreak;
+        }
         buffer = 0;
     } else if (buffer >= 0xe1 && buffer <= 0xe2) {
         // skip these
@@ -78,6 +89,9 @@ static void __interrupt __far keyboardHandler()
     } else if (rawcode >= 0xe0 && rawcode <= 0xe2) {
         buffer = rawcode;
     } else if (scancode < MAX_SCAN_CODES) {
+#ifdef LOGKEYS
+        Log::log("normal 0x%x %d\n", scancode, makeBreak);
+#endif
         normalKeys[scancode] = makeBreak;
     }
 
@@ -86,11 +100,13 @@ static void __interrupt __far keyboardHandler()
 }
 
 Engine::Engine()
-    : mDone(false), mItems(new List<std::string>())
+    : mDone(false), mItems(new List<std::string>()), mHighlighted(0), mSelected(-1)
 {
-    mLargeFont.load("font\\large.bin", 28, 44, 1, 14, 1, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`{|}~", false);
-    mSmallFont.load("font\\small.bin", 16, 48, 1, 8, 0, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", true);
-    if (!mLargeFont.isValid() || !mSmallFont.isValid()) {
+    mLargeFont = new Font();
+    mLargeFont->load("font\\large.bin", 28, 44, 1, 14, 1, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`{|}~", false);
+    mSmallFont = new Font();
+    mSmallFont->load("font\\small.bin", 16, 48, 1, 8, 0, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", true);
+    if (!mLargeFont->isValid() || !mSmallFont->isValid()) {
         mDone = true;
         return;
     }
@@ -153,6 +169,10 @@ void Engine::cleanup()
 
     delete mItems;
     mItems = 0;
+    delete mSmallFont;
+    mSmallFont = 0;
+    delete mLargeFont;
+    mLargeFont = 0;
 
     setMode(0x3);
 }
@@ -161,12 +181,15 @@ void Engine::update()
 {
     clear(BackgroundColor);
 
-    mLargeFont.drawText(10, 10, BoxshotLeft - 10, 30, 255, title);
+    mLargeFont->drawText(ItemLeft, 10, BoxshotLeft - 10, 30, 255, title);
 
-    int y = 0;
+    int y = ItemTop;
     for (unsigned int i = 0; i < mItems->size(); ++i) {
-        mSmallFont.drawText(10, y + 30, BoxshotLeft - 10, y + 40, 253, mItems->at(i));
-        y += 10;
+        if (i == mHighlighted) {
+            fillRect(ItemLeft - 1, y - 2, BoxshotLeft - 10, y + 10 + 1, HighlightColor);
+        }
+        mSmallFont->drawText(ItemLeft, y, BoxshotLeft - 10, y + 10, ItemColor, mItems->at(i));
+        y += 12;
     }
 }
 
@@ -175,7 +198,7 @@ struct BoxAnimation
     BoxAnimation();
 
     void reset();
-    void draw(const Ref<Decoder::Image>& image);
+    void draw(const Ref<Decoder::Image>& image, bool force);
 
     unsigned short y;
     signed short ydir;
@@ -195,13 +218,13 @@ inline void BoxAnimation::reset()
     cur = 0;
 }
 
-inline void BoxAnimation::draw(const Ref<Decoder::Image>& image)
+inline void BoxAnimation::draw(const Ref<Decoder::Image>& image, bool force)
 {
     if (++cur == BoxshotDelay) {
         if (ydir == 1) {
-            fillRect(BoxshotLeft, y - BoxshotShift, image->width, BoxshotShift, BackgroundColor);
+            fillRect(BoxshotLeft, y - BoxshotShift, BoxshotLeft + image->width, y, BackgroundColor);
         } else {
-            fillRect(BoxshotLeft, y + image->height, image->width, BoxshotShift, BackgroundColor);
+            fillRect(BoxshotLeft, y + image->height, BoxshotLeft + image->width, y + image->height + BoxshotShift, BackgroundColor);
         }
         if (y == BoxshotTop && ydir == -1)
             ydir = 1;
@@ -210,19 +233,47 @@ inline void BoxAnimation::draw(const Ref<Decoder::Image>& image)
         image->draw(BoxshotLeft, y);
         y += (BoxshotShift * ydir);
         cur = 0;
+    } else if (force) {
+        image->draw(BoxshotLeft, y);
     }
 }
 
 void Engine::process()
 {
+    // arrow up
+    bool needsUpdate = false;
+    static bool downPressed = false;
+    static bool upPressed = false;
+    if (extendedKeys[0x48] == 1) {
+        upPressed = true;
+    } else if (upPressed) {
+        upPressed = false;
+        if (mHighlighted > 0) {
+            --mHighlighted;
+            needsUpdate = true;
+        }
+    }
+    // arrow down
+    if (extendedKeys[0x50] == 1) {
+        downPressed = true;
+    } else if (downPressed) {
+        downPressed = false;
+        if (mHighlighted < mItems->size() - 1) {
+            ++mHighlighted;
+            needsUpdate = true;
+        }
+    }
+    if (needsUpdate)
+        update();
+
     if (!mImage.empty()) {
         static BoxAnimation animation;
-        animation.draw(mImage);
+        animation.draw(mImage, needsUpdate);
     }
 
     mScreen.flip();
 
     // exit if esc is pressed
-    if (normalKeys[1] == 1)
+    if (normalKeys[0x01] == 1)
         mDone = true;
 }
