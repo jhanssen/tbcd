@@ -142,6 +142,7 @@ Engine::Engine()
 
     mItems->push("foo bar");
     mItems->push("hello game");
+    mItems->push("King's Quest VI");
     update();
 
     mConnection->open(SerialPort::Com1);

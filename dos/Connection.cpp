@@ -101,6 +101,8 @@ bool Connection::parseMessage()
         // image, next two bytes is the unsigned short size and the next n bytes is the image data
         if (sz < 4)
             return false;
+
+        // assume we're little endian
         union {
             unsigned short len;
             unsigned char lenbuf[2];

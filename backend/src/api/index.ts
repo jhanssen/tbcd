@@ -1,5 +1,7 @@
 import { API } from "./common";
 import { initialize as wsInitialize } from "./ws-api";
+import { initialize as spInitialize } from "./sp-api";
+import { initialize as statusInitialize, getStatus } from "./status";
 
 const apis: { [key: string]: API } = {};
 
@@ -11,4 +13,4 @@ export function getAPI(port: string) {
     return api;
 }
 
-export { wsInitialize };
+export { wsInitialize, spInitialize, statusInitialize, getStatus };

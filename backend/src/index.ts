@@ -3,15 +3,16 @@ import xdg from "xdg-basedir";
 import mkdirp from "mkdirp";
 import path from "path";
 import { initialize as queueInitialize } from "./queue";
-import { wsInitialize } from "./api";
+import { wsInitialize, spInitialize, statusInitialize } from "./api";
 
 const options = Options({ prefix: "tbcd" });
 
-const comPort = options("com-port");
-if (typeof comPort !== "string") {
-    console.error("invalid port name", comPort);
+const ideComPort = options("ide-com-port");
+if (typeof ideComPort !== "string") {
+    console.error("invalid port name", ideComPort);
     process.exit(1);
 }
+const pcComPort = options("pc-com-port");
 const wsPort = options.int("ws-port", 8089);
 const wsPingInterval = options.int("ws-ping-interval", 60000);
 
@@ -29,11 +30,18 @@ if (typeof writeDir !== "string" || writeDir.indexOf("/tbcd") === 0) {
         console.log("writeDir", writeDir);
         await mkdirp(writeDir);
 
-        await queueInitialize({ comPort, queueButtonPin, longPressMs });
-        await wsInitialize({ writeDir, comPort, wsPort, wsPingInterval });
+        // the order of these is important
+        await statusInitialize({ ideComPort });
+        await queueInitialize({ ideComPort, queueButtonPin, longPressMs });
+        await wsInitialize({ writeDir, ideComPort, wsPort, wsPingInterval });
+        if (typeof pcComPort === "string") {
+            console.log("bringing up pc api");
+            await spInitialize({ writeDir, ideComPort, pcComPort });
+        } else {
+            console.log("not bringing up pc api");
+        }
     } catch (e) {
-        console.error("error making writeDir", e);
+        console.error("error bringing up backend", e);
         process.exit(1);
     }
-
 })().then(() => {}).catch(e => { console.error(e); process.exit(1); });

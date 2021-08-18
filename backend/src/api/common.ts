@@ -40,6 +40,7 @@ export class API extends EventEmitter {
     private images?: Image[];
     private imageReqs: ImageRequest[];
     private currentFileReqs: CurrentFileRequest[];
+    private currentSha1Reqs: CurrentFileRequest[];
     private cmds: Command[];
     private currentCmd?: string;
     private currentDir: string;
@@ -60,6 +61,7 @@ export class API extends EventEmitter {
         this.drives = ["SD:", "USB0:", "USB1:"];
         this.imageReqs = [];
         this.currentFileReqs = [];
+        this.currentSha1Reqs = [];
         this.cmds = [];
         this.currentDir = "/";
         this.pendingDirs = [];
@@ -90,8 +92,46 @@ export class API extends EventEmitter {
         });
     }
 
-    public selectFile(file: string) {
-        this.write(`disk select ${file}`);
+    public getCurrentSha1(): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
+            let done = false;
+            if (this.currentFile !== undefined) {
+                if (this.images) {
+                    for (let i of this.images) {
+                        if (i.name === this.currentFile) {
+                            resolve(i.sha1);
+                            done = true;
+                            break;
+                        }
+                    }
+                }
+                if (!done) {
+                    this.currentSha1Reqs.push({ resolve: resolve, reject: reject });
+                }
+            }
+        });
+    }
+
+    public selectFile(file: string, sha1?: boolean) {
+        let name = file;
+        if (sha1 === true) {
+            if (this.images) {
+                let found = false;
+                for (const i of this.images) {
+                    if (i.sha1 === file) {
+                        name = i.name;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    throw new Error(`sha1 ${file} not found`);
+                }
+            } else {
+                throw new Error(`No images`);
+            }
+        }
+        this.write(`disk select ${name}`);
         this.write("status", (data: string) => {
             if (data.indexOf("Unable to open") !== -1) {
                 this.finalizeCurrentFile();
@@ -120,6 +160,7 @@ export class API extends EventEmitter {
     private clear() {
         this.imageReqs = [];
         this.currentFileReqs = [];
+        this.currentSha1Reqs = [];
         this.cmds = [];
         this.currentDir = "/";
         this.pendingDirs = [];
@@ -282,6 +323,19 @@ export class API extends EventEmitter {
         }
         this.currentFileReqs = [];
         this.emit("currentFile", this.currentFile);
+        // find the sha of this
+        if (this.images) {
+            for (let i of this.images) {
+                if (i.name === this.currentFile) {
+                    for (const req of this.currentSha1Reqs) {
+                        req.resolve(i.sha1);
+                    }
+                    this.currentSha1Reqs = [];
+                    this.emit("currentSha1", i.sha1);
+                    break;
+                }
+            }
+        }
     }
 
     private processDrive() {

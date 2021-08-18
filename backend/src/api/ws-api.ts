@@ -1,4 +1,4 @@
-import { getAPI } from "./index";
+import { getAPI, getStatus } from "./index";
 import { writeDataFile, readDataFile, unlinkDataFile } from "../file";
 import { encodeTga, encodePng } from "../image";
 import { decrypt } from "../decrypt";
@@ -16,7 +16,7 @@ interface Ping {
 
 interface WSAPIOptions {
     writeDir: string;
-    comPort: string;
+    ideComPort: string;
     wsPort: number;
     wsPingInterval: number;
 };
@@ -41,26 +41,6 @@ export async function initialize(opts: WSAPIOptions) {
             }
         }
     };
-
-    const apiStatus: {
-        error?: Error;
-        open: boolean;
-    } = {
-        open: false
-    };
-
-    const api = getAPI(opts.comPort);
-    api.on("open", () => {
-        apiStatus.open = true;
-        apiStatus.error = undefined;
-    });
-    api.on("close", () => {
-        apiStatus.open = false;
-    });
-    api.on("error", (e: Error) => {
-        apiStatus.open = false;
-        apiStatus.error = e;
-    });
 
     const wssv1 = new WebSocketServer({ port: opts.wsPort, path: "/api/v1" });
 
@@ -88,6 +68,8 @@ export async function initialize(opts: WSAPIOptions) {
     });
 
     const queue = getQueue();
+    const api = getAPI(opts.ideComPort);
+    const apiStatus = getStatus();
 
     console.log(`listening on ws: ${opts.wsPort}`);
     wssv1.on("connection", ws => {

@@ -3,7 +3,7 @@ import assert from "./assert";
 import rpio from "rpio";
 
 export interface QueueOptions {
-    comPort: string;
+    ideComPort: string;
     queueButtonPin: number;
     longPressMs: number;
 }
@@ -19,7 +19,7 @@ export interface Queue {
 let queue: Queue | undefined;
 
 export async function initialize(opts: QueueOptions) {
-    const api = getAPI(opts.comPort);
+    const api = getAPI(opts.ideComPort);
 
     queue = {
         queue: [],
