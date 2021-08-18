@@ -11,13 +11,20 @@ interface SPAPIOptions {
     pcComPort: string;
 }
 
-let datas: Buffer[] = [];
+let dataBuffer: Buffer|undefined = undefined;
 let dataOffset = 0;
 
 function zero(str: string) {
     const b = Buffer.alloc(str.length + 1, 0);
     b.write(str, 0, str.length);
     return b;
+}
+
+function nameOf(n: string) {
+    const slash = n.lastIndexOf("/");
+    if (slash === -1)
+        return n;
+    return n.substr(slash + 1);
 }
 
 interface ProcessOptions {
@@ -37,7 +44,7 @@ function processData(opts: ProcessOptions, data: Buffer) {
         opts.api.getImages().then(imgs => {
             const reads = [];
             for (let i of imgs) {
-                reads.push(readDataFile(opts.writeDir, `${i.sha1}.txt`, "utf8"));
+                reads.push(readDataFile(opts.writeDir, `${i.sha1}.txt`, "ascii"));
             }
             Promise.allSettled(reads).then(names => {
                 const rnames = names.map(n => {
@@ -47,7 +54,7 @@ function processData(opts: ProcessOptions, data: Buffer) {
                     default:
                         break;
                     }
-                    return "";
+                    return undefined;
                 });
                 if (rnames.length !== imgs.length) {
                     throw new Error(`name length mismatch ${rnames.length} {imgs.length}`);
@@ -56,12 +63,12 @@ function processData(opts: ProcessOptions, data: Buffer) {
                     // write sha1, name
                     opts.port.write("it");
                     opts.port.write(zero(imgs[i].sha1));
-                    opts.port.write(zero(rnames[i]));
+                    opts.port.write(zero(rnames[i] || nameOf(imgs[i].name)));
                 }
             }).catch((e: Error) => { throw e; });
         }).catch((e: Error) => { console.error("api getImages error", e.message); });
         return 3; }
-    case "ci":
+    case "ci": {
         // current item
         if (data[2] === 0) {
             // get current item
@@ -69,22 +76,21 @@ function processData(opts: ProcessOptions, data: Buffer) {
                 opts.port.write(zero(`ci${file || ""}`));
             }).catch((e: Error) => { console.error("api getCurrentSha1 error", e.message); });
             return 3;
-        } else {
-            // set current item
-            // scan for 0 terminate
-            const z1 = data.indexOf(0, 2);
-            if (z1 === -1)
-                return 0;
-            // grab the sha1
-            const sha1 = data.toString("ascii", 2, z1);
-            try {
-                opts.api.selectFile(sha1, true);
-            } catch (e) {
-                console.error("api selectFile error", e.message);
-            }
-            return z1 + 1;
         }
-    case "im":
+        // set current item
+        // scan for 0 terminate
+        const z1 = data.indexOf(0, 2);
+        if (z1 === -1)
+            return 0;
+        // grab the sha1
+        const sha1 = data.toString("ascii", 2, z1);
+        try {
+            opts.api.selectFile(sha1, true);
+        } catch (e) {
+            console.error("api selectFile error", e.message);
+        }
+        return z1 + 1; }
+    case "im": {
         // scan for 0 terminate
         const z1 = data.indexOf(0, 2);
         if (z1 === -1)
@@ -99,7 +105,7 @@ function processData(opts: ProcessOptions, data: Buffer) {
             opts.port.write(imglen);
             opts.port.write(data);
         }).catch((e: Error) => { console.error("api read image error", e.message); });
-        return z1 + 1;
+        return z1 + 1; }
     }
     return 0;
 }
@@ -131,17 +137,15 @@ export async function initialize(opts: SPAPIOptions) {
         console.error("pc com port close");
     });
     port.on("data", (data: Buffer) => {
-        datas.push(data);
-        if (datas.length > 0) {
-            if (datas.length > 1) {
-                const b = Buffer.concat(datas);
-                datas = [b];
-            }
-            dataOffset += processData(processOpts, datas[0]);
-            if (dataOffset === Buffer.byteLength(datas[0])) {
-                dataOffset = 0;
-                datas = [];
-            }
+        if (dataBuffer) {
+            dataBuffer = Buffer.concat([dataBuffer, data]);
+        } else {
+            dataBuffer = data;
+        }
+        dataOffset += processData(processOpts, dataBuffer);
+        if (dataOffset === Buffer.byteLength(dataBuffer)) {
+            dataOffset = 0;
+            dataBuffer = undefined;
         }
     });
     api.on("currentSha1", (sha1: string|undefined) => {

@@ -3,17 +3,22 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 cd "${SCRIPT_DIR}/.."
 
-COM="$2"
+IDECOM="$2"
+PCCOM="$3"
 QUEUEPIN="-1"
-case "${COM#-}" in
+case "${IDECOM#-}" in
     ''|*[!0-9]*) ;;
-    *) QUEUEPIN="$COM"; COM="" ;;
+    *) QUEUEPIN="$IDECOM"; IDECOM="" ;;
 esac
-if [ -z "$COM" ]; then
-    COM="$3"
-    if [ -z "$COM" ]; then
-        COM="/dev/ttyACM0"
-    fi
+if [ -z "$IDECOM" ]; then
+    IDECOM="$3"
+    PCCOM="$4"
+fi
+if [ -z "$IDECOM" ]; then
+    IDECOM="/dev/ttyACM0"
+fi
+if [ -z "$PCCOM" ]; then
+    PCCOM="/dev/ttyUSB0"
 fi
 
 PORT="$2"
@@ -24,7 +29,7 @@ fi
 case "$1" in
     backend)
         cd backend
-        node build/main/index.js --com-port "$COM" --queue-button-pin "$QUEUEPIN"
+        node build/main/index.js --ide-com-port "$IDECOM" --pc-com-port "$PCCOM" --queue-button-pin "$QUEUEPIN"
         ;;
     web)
         cd web/dist/web
