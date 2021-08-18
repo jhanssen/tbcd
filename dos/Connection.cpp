@@ -99,8 +99,8 @@ bool Connection::parseMessage()
             unsigned short len;
             unsigned char lenbuf[2];
         };
-        lenbuf[0] = ptr[1];
-        lenbuf[1] = ptr[2];
+        lenbuf[0] = ptr[2];
+        lenbuf[1] = ptr[3];
 
         Log::log("got image of size %hu\n", len);
 
