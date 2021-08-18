@@ -1,5 +1,6 @@
 #include "Connection.h"
 #include "Log.h"
+#include <assert.h>
 
 Connection::Connection(SerialPort::ComPort com)
     : mTopItem(0), mTopImage(0), mTopCurrentItem(0), mReadOffset(0)
@@ -43,10 +44,11 @@ void Connection::setCurrentItem(const std::string& item)
 bool Connection::parseMessage()
 {
     // first two bytes is the message type
-    if (mRead.size() < 2)
-        return false;
+    assert(mReadOffset < mRead.size());
     const unsigned int sz = mRead.size() - mReadOffset;
     const unsigned char* ptr = mRead.ptr() + mReadOffset;
+    if (sz < 2)
+        return false;
     if (ptr[0] == 'i' && ptr[1] == 't') {
         // item, this consists of a disc name followed by a friendly name
         int fe = -1, le = -1;
