@@ -245,6 +245,13 @@ inline void BoxAnimation::draw(const Ref<Decoder::Image>& image, bool force)
 
 void Engine::process()
 {
+    // poll connection
+    connection::Availability avail;
+    mConnection->poll(&avail);
+    if (avail.item > 0) {
+        Log::log("got avail %d %d %d\n", avail.item, avail.currentItem, avail.image);
+    }
+
     // arrow up
     bool needsUpdate = false;
     static bool downPressed = false;

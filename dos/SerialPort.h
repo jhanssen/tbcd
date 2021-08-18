@@ -30,6 +30,7 @@ public:
 
     bool write(const Ref<U8Buffer>& buffer);
     bool write(const unsigned char* data, unsigned int size);
+    bool write(const char* data, unsigned int size);
 
 private:
     ComPort mCom;
@@ -40,6 +41,11 @@ inline bool SerialPort::write(const Ref<U8Buffer>& buffer)
     if (!buffer)
         return false;
     return write(buffer->ptr(), buffer->size());
+}
+
+inline bool SerialPort::write(const char* data, unsigned int size)
+{
+    return write((const unsigned char*)data, size);
 }
 
 #endif // SERIALPORT_H

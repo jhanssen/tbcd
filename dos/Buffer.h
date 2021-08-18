@@ -20,7 +20,7 @@ public:
 
     void realloc(unsigned int newsize);
 
-    void append(T* ptr, unsigned int size);
+    void append(const T* ptr, unsigned int size);
     void append(const Ref<Buffer>& buffer);
     void take(Ref<Buffer>& buffer);
 
@@ -85,7 +85,7 @@ inline void Buffer<T>::realloc(unsigned int newsize)
 }
 
 template<typename T>
-inline void Buffer<T>::append(T* ptr, unsigned int size)
+inline void Buffer<T>::append(const T* ptr, unsigned int size)
 {
     realloc(mSize + size);
     memcpy(mPtr + mSize, ptr, size);
@@ -145,6 +145,7 @@ inline T* Buffer<T>::ptr()
     return mPtr;
 }
 
+typedef Buffer<char> CBuffer;
 typedef Buffer<unsigned char> U8Buffer;
 typedef Buffer<unsigned short> U16Buffer;
 

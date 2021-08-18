@@ -11,15 +11,15 @@
 namespace connection {
 struct Availability
 {
-    int boxshot;
+    int image;
     int item;
     int currentItem;
 };
 
 struct Item
 {
-    std::string disc;
-    std::string name;
+    CBuffer disc;
+    CBuffer name;
 };
 } // namespace connection
 
@@ -32,14 +32,15 @@ public:
     void open(SerialPort::ComPort com);
 
     void requestItems();
-    void requestBoxshot(const std::string& item);
+    void requestImage(const std::string& item);
+    void requestCurrentItem();
     void setCurrentItem(const std::string& item);
 
     void poll(connection::Availability* avails);
 
     Ref<Decoder::Image> nextImage();
     Ref<connection::Item> nextItem();
-    std::string nextCurrentItem();
+    Ref<CBuffer> nextCurrentItem();
 
 private:
     bool parseMessage();
@@ -54,7 +55,7 @@ private:
     List<Ref<U8Buffer> > mImages;
 
     int mTopCurrentItem;
-    List<std::string> mCurrentItems;
+    List<Ref<CBuffer> > mCurrentItems;
 
     int mReadOffset;
     U8Buffer mRead;
@@ -82,15 +83,15 @@ inline Ref<connection::Item> Connection::nextItem()
     return Ref<connection::Item>();
 }
 
-inline std::string Connection::nextCurrentItem()
+inline Ref<CBuffer> Connection::nextCurrentItem()
 {
     if (mTopCurrentItem < mCurrentItems.size()) {
-        std::string item = mCurrentItems[mTopCurrentItem++];
+        Ref<CBuffer> item = mCurrentItems[mTopCurrentItem++];
         if (mTopCurrentItem == mCurrentItems.size())
             mCurrentItems.clear();
         return item;
     }
-    return std::string();
+    return Ref<CBuffer>();
 }
 
 #endif // CONNECTION_H
