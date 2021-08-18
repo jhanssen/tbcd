@@ -166,7 +166,7 @@ void Engine::update()
 
     int y = 0;
     for (unsigned int i = 0; i < mItems->size(); ++i) {
-        mSmallFont.drawText(10, y + 30, 100, y + 40, 253, mItems->at(i));
+        mSmallFont.drawText(10, y + 30, BoxshotLeft - 10, y + 40, 253, mItems->at(i));
         y += 10;
     }
 }
