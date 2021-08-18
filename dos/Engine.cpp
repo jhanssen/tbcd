@@ -21,7 +21,7 @@ void __interrupt __far (*oldKeyboardISR)() = 0;
 
 enum {
     BackgroundColor = 254,
-    BoxshotLeft = 200,
+    BoxshotLeft = 230,
     BoxshotTop = 10,
     BoxshotBottom = 20,
     BoxshotShift = 1,
@@ -120,11 +120,15 @@ Engine::Engine()
     clear(BackgroundColor);
 
     mLargeFont.drawText(10, 10, 100, 100, 255, "0ABabcdtd");
-    mSmallFont.drawText(10, 150, 320, 200, 253, "Hello World! the world is blue");
+    // mSmallFont.drawText(10, 150, 320, 200, 253, "Hello World! the world is blue");
 
     if (mImage) {
         mImage->applyPalette();
     }
+
+    mItems.push("foo bar");
+    mItems.push("hello game");
+    update();
 }
 
 Engine::~Engine()
@@ -149,6 +153,19 @@ void Engine::cleanup()
     }
 
     setMode(0x3);
+}
+
+void Engine::update()
+{
+    clear(BackgroundColor);
+
+    mLargeFont.drawText(10, 10, 100, 100, 255, "0ABabcdtd");
+
+    int y = 0;
+    for (unsigned int i = 0; i < mItems.size(); ++i) {
+        mSmallFont.drawText(10, y + 30, 100, y + 40, 253, mItems[i].c_str());
+        y += 10;
+    }
 }
 
 struct BoxAnimation

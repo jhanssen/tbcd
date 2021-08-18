@@ -3,7 +3,9 @@
 
 #include "Font.h"
 #include "Decoder.h"
+#include "List.h"
 #include "Screen.h"
+#include <string>
 
 class Engine
 {
@@ -16,10 +18,14 @@ public:
     void cleanup();
 
 private:
+    void update();
+
+private:
     bool mDone;
     Font mLargeFont, mSmallFont;
     Ref<Decoder::Image> mImage;
     Screen mScreen;
+    List<std::string> mItems;
 
     static Engine* sEngine;
 
