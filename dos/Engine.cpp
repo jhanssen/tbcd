@@ -19,6 +19,8 @@ void __interrupt __far (*oldCtrlCISR)() = 0;
 void __interrupt __far (*oldCtrlBrkISR)() = 0;
 void __interrupt __far (*oldKeyboardISR)() = 0;
 
+const char* title = "TBCD";
+
 enum {
     BackgroundColor = 254,
     BoxshotLeft = 230,
@@ -119,9 +121,6 @@ Engine::Engine()
     reservePalette();
     clear(BackgroundColor);
 
-    mLargeFont.drawText(10, 10, 100, 100, 255, "0ABabcdtd");
-    // mSmallFont.drawText(10, 150, 320, 200, 253, "Hello World! the world is blue");
-
     if (mImage) {
         mImage->applyPalette();
     }
@@ -162,7 +161,7 @@ void Engine::update()
 {
     clear(BackgroundColor);
 
-    mLargeFont.drawText(10, 10, 100, 100, 255, "0ABabcdtd");
+    mLargeFont.drawText(10, 10, 100, 100, 255, title);
 
     int y = 0;
     for (unsigned int i = 0; i < mItems->size(); ++i) {
