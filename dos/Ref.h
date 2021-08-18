@@ -18,6 +18,9 @@ public:
     T* operator->();
     const T* operator->() const;
 
+    T* release();
+    void reset();
+
 private:
     struct Data
     {
@@ -71,6 +74,28 @@ inline Ref<T>& Ref<T>::operator=(const Ref& ref)
         ++mData->count;
     }
     return *this;
+}
+
+template<typename T>
+T* Ref<T>::release()
+{
+    if (mData && mData->count == 1) {
+        T* item = mData->item;
+        delete mData;
+        mData = 0;
+        return item;
+    }
+    return 0;
+}
+
+template<typename T>
+void Ref<T>::reset()
+{
+    if (mData && !--mData->count) {
+        delete mData->item;
+        delete mData;
+    }
+    mData = 0;
 }
 
 template<typename T>

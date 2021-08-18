@@ -101,7 +101,8 @@ static void __interrupt __far keyboardHandler()
 
 Engine::Engine()
     : mDone(false), mLargeFont(new Font()), mSmallFont(new Font()),
-      mItems(new List<std::string>()), mHighlighted(0), mSelected(-1)
+      mItems(new List<std::string>()), mHighlighted(0), mSelected(-1),
+      mConnection(new Connection)
 {
     mLargeFont->load("font\\large.bin", 28, 44, 1, 14, 1, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`{|}~", false);
     mSmallFont->load("font\\small.bin", 16, 48, 1, 8, 0, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", true);
@@ -142,6 +143,8 @@ Engine::Engine()
     mItems->push("foo bar");
     mItems->push("hello game");
     update();
+
+    mConnection->open(SerialPort::Com1);
 }
 
 Engine::~Engine()
@@ -171,6 +174,8 @@ void Engine::cleanup()
     mSmallFont = 0;
     delete mLargeFont;
     mLargeFont = 0;
+    delete mConnection;
+    mConnection = 0;
 
     setMode(0x3);
 }
@@ -183,7 +188,9 @@ void Engine::update()
 
     int y = ItemTop;
     for (unsigned int i = 0; i < mItems->size(); ++i) {
-        if (i == mHighlighted) {
+        if (i == mSelected)  {
+            fillRect(ItemLeft - 1, y - 2, BoxshotLeft - 10, y + 10 + 1, SelectedItemColor);
+        } else if (i == mHighlighted) {
             fillRect(ItemLeft - 1, y - 2, BoxshotLeft - 10, y + 10 + 1, HighlightColor);
         }
         mSmallFont->drawText(ItemLeft, y, BoxshotLeft - 10, y + 10, ItemColor, mItems->at(i));

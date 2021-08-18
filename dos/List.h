@@ -15,6 +15,7 @@ public:
 
     List& operator=(const List& other);
 
+    void reset();
     void clear();
     void resize(unsigned int size);
 
@@ -62,13 +63,13 @@ inline List<T>::List(const List& other)
 template<typename T>
 inline List<T>::~List()
 {
-    clear();
+    reset();
 }
 
 template<typename T>
 inline List<T>& List<T>::operator=(const List& other)
 {
-    clear();
+    reset();
     copyFrom(other);
     return *this;
 }
@@ -100,7 +101,7 @@ template<typename T>
 inline void List<T>::resize(unsigned int size)
 {
     if (!size) {
-        clear();
+        reset();
     } else {
         realloc(size);
         mSize = size;
@@ -121,6 +122,17 @@ inline void List<T>::copyFrom(const List& other)
 
 template<typename T>
 inline void List<T>::clear()
+{
+    if (mData) {
+        for (unsigned int i = 0; i < mSize; ++i) {
+            mData[i].~T();
+        }
+        mSize = 0;
+    }
+}
+
+template<typename T>
+inline void List<T>::reset()
 {
     if (mData) {
         for (unsigned int i = 0; i < mSize; ++i) {

@@ -1,6 +1,7 @@
 #ifndef DECODER_H
 #define DECODER_H
 
+#include "Buffer.h"
 #include "Ref.h"
 
 class Decoder
@@ -31,6 +32,14 @@ public:
 
     static Ref<Image> decode(const char* file);
     static Ref<Image> decode(const unsigned char* data, unsigned int size);
+    static Ref<Image> decode(const Ref<U8Buffer>& buffer);
 };
+
+inline Ref<Decoder::Image> Decoder::decode(const Ref<U8Buffer>& buffer)
+{
+    if (!buffer)
+        return Ref<Image>();
+    return decode(buffer->ptr(), buffer->size());
+}
 
 #endif

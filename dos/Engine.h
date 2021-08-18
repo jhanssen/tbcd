@@ -5,6 +5,7 @@
 #include "Decoder.h"
 #include "List.h"
 #include "Screen.h"
+#include "Connection.h"
 #include <string>
 
 class Engine
@@ -29,6 +30,7 @@ private:
     List<std::string>* mItems;
     unsigned int mHighlighted;
     int mSelected;
+    Connection* mConnection;
 
     static Engine* sEngine;
 
