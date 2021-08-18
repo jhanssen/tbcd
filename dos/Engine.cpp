@@ -19,7 +19,7 @@ void __interrupt __far (*oldCtrlCISR)() = 0;
 void __interrupt __far (*oldCtrlBrkISR)() = 0;
 void __interrupt __far (*oldKeyboardISR)() = 0;
 
-const char* title = "TBCD";
+const char* title = "Ide simulator";
 
 enum {
     BackgroundColor = 254,
@@ -100,11 +100,10 @@ static void __interrupt __far keyboardHandler()
 }
 
 Engine::Engine()
-    : mDone(false), mItems(new List<std::string>()), mHighlighted(0), mSelected(-1)
+    : mDone(false), mLargeFont(new Font()), mSmallFont(new Font()),
+      mItems(new List<std::string>()), mHighlighted(0), mSelected(-1)
 {
-    mLargeFont = new Font();
     mLargeFont->load("font\\large.bin", 28, 44, 1, 14, 1, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`{|}~", false);
-    mSmallFont = new Font();
     mSmallFont->load("font\\small.bin", 16, 48, 1, 8, 0, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", true);
     if (!mLargeFont->isValid() || !mSmallFont->isValid()) {
         mDone = true;
@@ -135,7 +134,6 @@ Engine::Engine()
     wait(10);
 
     reservePalette();
-    clear(BackgroundColor);
 
     if (mImage) {
         mImage->applyPalette();
