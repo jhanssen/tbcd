@@ -74,7 +74,7 @@ static inline void drawArrow(int x, int y, unsigned char color, bool flip)
     for (int r = 0; r < ArrowHeight; ++r) {
         for (int c = 0; c < ArrowWidth; ++c) {
             if (arrow[flip ? ArrowHeight - r - 1 : r][c])
-                *(VGA + + ((y + r) * 320) + x + c) = color;
+                *(VGA + ((y + r) * 320) + x + c) = color;
         }
     }
 }
