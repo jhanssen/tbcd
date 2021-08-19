@@ -12,15 +12,15 @@ int main(int argc, char** argv)
         bps = 115200L;
     }
     Log::log("before engine\n");
-    Engine engine(bps);
+    Engine* engine = new Engine(bps);
     Log::log("after engine\n");
     for (;;) {
-        if (engine.done())
+        if (engine->done())
             break;
-        engine.process();
+        engine->process();
     }
     Log::log("engine cleaning up\n");
-    engine.cleanup();
+    delete engine;
     Log::log("engine done\n");
 
     return 0;

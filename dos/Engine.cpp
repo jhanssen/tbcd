@@ -144,8 +144,8 @@ Engine::Engine(long int bps)
 
 Engine::~Engine()
 {
-    sEngine = 0;
     cleanup();
+    sEngine = 0;
 }
 
 void Engine::cleanup()
