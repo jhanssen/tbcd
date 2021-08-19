@@ -2,11 +2,12 @@
 #define ENGINE_H
 
 #include "Buffer.h"
+#include "Connection.h"
 #include "Font.h"
 #include "Decoder.h"
 #include "List.h"
 #include "Screen.h"
-#include "Connection.h"
+#include "Utils.h"
 #include <string>
 
 class Engine
@@ -26,6 +27,8 @@ private:
     bool mDone;
     Font* mLargeFont;
     Font* mSmallFont;
+    Timer mImageTimer;
+    Ref<CBuffer> mImagePending;
     Ref<Decoder::Image> mImage;
     Screen mScreen;
     List<Ref<connection::Item> >* mItems;

@@ -1,9 +1,12 @@
 #include "Utils.h"
 #include "Screen.h"
 #include <conio.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+unsigned long int* CLOCK = (unsigned long*)0x0000046C;
 
 Ref<U8Buffer> readFile(const char* file)
 {
@@ -29,11 +32,43 @@ Ref<U8Buffer> readFile(const char* file)
     return Ref<U8Buffer>(new U8Buffer(data, datacur));
 }
 
-void wait(int ticks)
+Timer::Timer(unsigned short ticks)
+    : mWhen(0), mWraps(0)
 {
-    unsigned short* CLOCK = (unsigned short*)0x0000046C;
-    const unsigned short start = *CLOCK;
-    while (*CLOCK - start < ticks)
+    if (ticks > 0)
+        start(ticks);
+}
+
+void Timer::start(unsigned short ticks)
+{
+    mWhen = *CLOCK;
+    if (mWhen + (unsigned long)ticks < mWhen) {
+        // we're wrapping
+        mWraps = ULONG_MAX - mWhen;
+    } else {
+        mWraps = 0;
+    }
+    mWhen += (unsigned long)ticks;
+}
+
+bool Timer::expired() const
+{
+    unsigned long int clock = *CLOCK;
+    // if we're not wrapping then do a simple compare
+    if (!mWraps)
+        return mWhen <= clock;
+    // are we still increasing on our way to wrapping?
+    if (clock >= mWraps)
+        return false;
+    // no, do a simple compare
+    mWraps = 0;
+    return mWhen <= clock;
+}
+
+void wait(unsigned short ticks)
+{
+    Timer timer(ticks);
+    while (!timer.expired())
         ;
 }
 

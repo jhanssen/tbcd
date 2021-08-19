@@ -269,6 +269,11 @@ void Engine::process()
         }
     }
 
+    if (mImagePending && mImageTimer.expired()) {
+        mConnection->requestImage(mImagePending);
+        mImagePending.reset();
+    }
+
     // arrow up
     static bool downPressed = false;
     static bool upPressed = false;
@@ -278,8 +283,9 @@ void Engine::process()
         upPressed = false;
         if (mHighlighted > 0) {
             --mHighlighted;
+            mImagePending = mItems->at(mHighlighted)->disc;
+            mImageTimer.start(18);
             needsUpdate = true;
-            mConnection->requestImage(mItems->at(mHighlighted)->disc);
         }
     }
     // arrow down
@@ -289,8 +295,9 @@ void Engine::process()
         downPressed = false;
         if (mHighlighted < mItems->size() - 1) {
             ++mHighlighted;
+            mImagePending = mItems->at(mHighlighted)->disc;
+            mImageTimer.start(18);
             needsUpdate = true;
-            mConnection->requestImage(mItems->at(mHighlighted)->disc);
         }
     }
     if (needsUpdate)

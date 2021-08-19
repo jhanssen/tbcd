@@ -5,7 +5,21 @@
 #include "Ref.h"
 
 void reservePalette();
-void wait(int ticks);
+
+class Timer
+{
+public:
+    Timer(unsigned short ticks = 0);
+
+    void start(unsigned short ticks);
+    bool expired() const;
+
+private:
+    unsigned long mWhen;
+    mutable unsigned long mWraps;
+};
+
+void wait(unsigned short ticks);
 
 Ref<U8Buffer> readFile(const char* file);
 
