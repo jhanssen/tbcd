@@ -265,6 +265,7 @@ void Engine::process()
         if (img) {
             img->applyPalette();
             mImage = img;
+            needsUpdate = true;
         }
     }
 
