@@ -297,6 +297,15 @@ void Engine::process()
             mHighlighted = 0;
             mConnection->requestImage(mItems->at(mHighlighted)->disc);
         }
+        if (mSelectedPending) {
+            for (unsigned int i = 0; i < mItems->size(); ++i) {
+                if (mItems->at(i)->disc->compare(*mSelectedPending) == 0) {
+                    mSelected = i;
+                    mSelectedPending.reset();
+                    break;
+                }
+            }
+        }
         needsUpdate = true;
     }
     if (avail.image > 0) {
@@ -309,15 +318,20 @@ void Engine::process()
         }
     }
     if (avail.currentItem > 0) {
+        mSelected = -1;
+        mSelectedPending.reset();
+
         Ref<CBuffer> current = mConnection->nextCurrentItem();
-        // find this in our list of items
-        if (mItems) {
+        if (!current->empty()) {
+            // find this in our list of items
             for (unsigned int i = 0; i < mItems->size(); ++i) {
                 if (mItems->at(i)->disc->compare(*current) == 0) {
                     mSelected = i;
                     break;
                 }
             }
+            if (mSelected == -1)
+                mSelectedPending = current;
         }
     }
 

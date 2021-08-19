@@ -33,6 +33,7 @@ private:
     Screen mScreen;
     List<Ref<connection::Item> >* mItems;
     unsigned int mHighlighted;
+    Ref<CBuffer> mSelectedPending;
     int mSelected;
     int mFirstItem;
     int mVisibleItems;
