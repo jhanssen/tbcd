@@ -44,8 +44,7 @@ function processData(opts: ProcessOptions, data: Buffer) {
     case "it": {
         if (data[2] !== 0) {
             console.error("invalid item message");
-            dataOffset = Buffer.byteLength(data);
-            return 0;
+            return -1;
         }
         console.log("dos wants items");
         // items
@@ -123,7 +122,7 @@ function processData(opts: ProcessOptions, data: Buffer) {
         dataOffset = Buffer.byteLength(data);
         break;
     }
-    return 0;
+    return -1;
 }
 
 export async function initialize(opts: SPAPIOptions) {
@@ -159,11 +158,13 @@ export async function initialize(opts: SPAPIOptions) {
         } else {
             dataBuffer = data;
         }
-        dataOffset += processData(processOpts, dataBuffer);
-        if (dataOffset === Buffer.byteLength(dataBuffer)) {
+        const processed = processData(processOpts, dataBuffer);
+        if (processed === -1 || dataOffset + processed === Buffer.byteLength(dataBuffer)) {
             dataOffset = 0;
             dataBuffer = undefined;
             console.log("clearing buffer");
+        } else {
+            dataOffset += processed
         }
     });
     api.on("currentSha1", (sha1: string|undefined) => {
