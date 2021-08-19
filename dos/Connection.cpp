@@ -104,7 +104,7 @@ bool Connection::parseMessage()
         }
         if (fe != -1) {
             Ref<CBuffer> item(new CBuffer);
-            item->append((const char*)(ptr + 2), fe - 2);
+            item->append((const char*)(ptr + 2), fe - 1);
             mCurrentItem = item;
 
             mReadOffset += fe + 1;
