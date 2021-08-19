@@ -340,9 +340,10 @@ void Engine::process()
         mImagePending.reset();
     }
 
-    // arrow up
     static bool downPressed = false;
     static bool upPressed = false;
+    static bool enterPressed = false;
+    // arrow up
     if (extendedKeys[0x48] == 1) {
         upPressed = true;
     } else if (upPressed) {
@@ -369,6 +370,14 @@ void Engine::process()
             mImageTimer.start(18);
             needsUpdate = true;
         }
+    }
+    // enter
+    if (extendedKeys[0x1c] == 1) {
+        enterPressed = true;
+    } else if (enterPressed) {
+        enterPressed = false;
+        // select this item
+        mConnection->setCurrentItem(mItems->at(mHighlighted)->disc);
     }
     if (needsUpdate)
         update();
