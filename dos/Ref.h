@@ -22,7 +22,7 @@ public:
     const T& operator*() const;
 
     T* release();
-    void reset();
+    void reset(T* item = 0);
 
 private:
     struct Data
@@ -92,13 +92,19 @@ T* Ref<T>::release()
 }
 
 template<typename T>
-void Ref<T>::reset()
+void Ref<T>::reset(T* item)
 {
     if (mData && !--mData->count) {
         delete mData->item;
         delete mData;
     }
-    mData = 0;
+    if (item) {
+        mData = new Data;
+        mData->item = item;
+        mData->count = 1;
+    } else {
+        mData = 0;
+    }
 }
 
 template<typename T>

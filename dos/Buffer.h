@@ -87,9 +87,9 @@ inline void Buffer<T>::realloc(unsigned int newsize)
 template<typename T>
 inline void Buffer<T>::append(const T* ptr, unsigned int size)
 {
+    const unsigned int off = mSize;
     realloc(mSize + size);
-    memcpy(mPtr + mSize, ptr, size);
-    mSize += size;
+    memcpy(mPtr + off, ptr, size);
 }
 
 template<typename T>

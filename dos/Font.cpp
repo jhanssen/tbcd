@@ -139,7 +139,7 @@ void Font::drawText(unsigned short x0, unsigned short y0, unsigned short x1, uns
             }
         }
 
-        x += expand + 1;
+        x += expand;
         if (x >= xmax)
             break;
 

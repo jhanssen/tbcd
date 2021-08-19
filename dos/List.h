@@ -23,6 +23,7 @@ public:
     void pop();
 
     unsigned int size() const;
+    bool empty() const;
 
     T& front();
     const T& front() const;
@@ -168,6 +169,12 @@ template<typename T>
 unsigned int List<T>::size() const
 {
     return mSize;
+}
+
+template<typename T>
+bool List<T>::empty() const
+{
+    return mSize == 0;
 }
 
 template<typename T>

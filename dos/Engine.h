@@ -1,6 +1,7 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+#include "Buffer.h"
 #include "Font.h"
 #include "Decoder.h"
 #include "List.h"
@@ -27,7 +28,7 @@ private:
     Font* mSmallFont;
     Ref<Decoder::Image> mImage;
     Screen mScreen;
-    List<std::string>* mItems;
+    List<Ref<connection::Item> >* mItems;
     unsigned int mHighlighted;
     int mSelected;
     Connection* mConnection;

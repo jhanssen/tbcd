@@ -101,7 +101,7 @@ static void __interrupt __far keyboardHandler()
 
 Engine::Engine()
     : mDone(false), mLargeFont(new Font()), mSmallFont(new Font()),
-      mItems(new List<std::string>()), mHighlighted(0), mSelected(-1),
+      mItems(new List<Ref<connection::Item> >()), mHighlighted(0), mSelected(-1),
       mConnection(new Connection)
 {
     mLargeFont->load("font\\large.bin", 28, 44, 1, 14, 1, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`{|}~", false);
@@ -111,10 +111,10 @@ Engine::Engine()
         return;
     }
 
-    mImage = Decoder::decode("TEST2.GIF");
-    if (!mImage.empty()) {
-        Log::log("decoded %hu %hu\n", mImage->width, mImage->height);
-    }
+    // mImage = Decoder::decode("TEST2.GIF");
+    // if (!mImage.empty()) {
+    //     Log::log("decoded %hu %hu\n", mImage->width, mImage->height);
+    // }
 
     sEngine = this;
 
@@ -136,16 +136,10 @@ Engine::Engine()
 
     reservePalette();
 
-    if (mImage) {
-        mImage->applyPalette();
-    }
-
-    mItems->push("foo bar");
-    mItems->push("hello game");
-    mItems->push("King's Quest VI");
     update();
 
     mConnection->open(SerialPort::Com1);
+    mConnection->requestItems();
 }
 
 Engine::~Engine()
@@ -194,7 +188,7 @@ void Engine::update()
         } else if (i == mHighlighted) {
             fillRect(ItemLeft - 1, y - 2, BoxshotLeft - 10, y + 10 + 1, HighlightColor);
         }
-        mSmallFont->drawText(ItemLeft, y, BoxshotLeft - 10, y + 10, ItemColor, mItems->at(i));
+        mSmallFont->drawText(ItemLeft, y, BoxshotLeft - 10, y + 10, ItemColor, mItems->at(i)->name->ptr());
         y += 12;
     }
 }
@@ -246,15 +240,35 @@ inline void BoxAnimation::draw(const Ref<Decoder::Image>& image, bool force)
 
 void Engine::process()
 {
+    bool needsUpdate = false;
+
     // poll connection
     connection::Availability avail;
     mConnection->poll(&avail);
     if (avail.item > 0) {
-        Log::log("got avail %d %d %d\n", avail.item, avail.currentItem, avail.image);
+        // Log::log("got avail %d %d %d\n", avail.item, avail.currentItem, avail.image);
+        const bool wasEmpty = mItems->empty();
+        Ref<connection::Item> item;
+        do {
+            item = mConnection->nextItem();
+            if (item)
+                mItems->push(item);
+        } while (item);
+        if (wasEmpty && !mItems->empty()) {
+            mHighlighted = 0;
+            mConnection->requestImage(mItems->at(mHighlighted)->disc);
+        }
+        needsUpdate = true;
+    }
+    if (avail.image > 0) {
+        Ref<Decoder::Image> img = mConnection->nextImage();
+        if (img) {
+            img->applyPalette();
+            mImage = img;
+        }
     }
 
     // arrow up
-    bool needsUpdate = false;
     static bool downPressed = false;
     static bool upPressed = false;
     if (extendedKeys[0x48] == 1) {
@@ -264,6 +278,7 @@ void Engine::process()
         if (mHighlighted > 0) {
             --mHighlighted;
             needsUpdate = true;
+            mConnection->requestImage(mItems->at(mHighlighted)->disc);
         }
     }
     // arrow down
@@ -274,6 +289,7 @@ void Engine::process()
         if (mHighlighted < mItems->size() - 1) {
             ++mHighlighted;
             needsUpdate = true;
+            mConnection->requestImage(mItems->at(mHighlighted)->disc);
         }
     }
     if (needsUpdate)

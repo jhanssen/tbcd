@@ -6,7 +6,6 @@
 #include "Ref.h"
 #include "SerialPort.h"
 #include "List.h"
-#include <string>
 
 namespace connection {
 struct Availability
@@ -18,8 +17,8 @@ struct Availability
 
 struct Item
 {
-    CBuffer disc;
-    CBuffer name;
+    Ref<CBuffer> disc;
+    Ref<CBuffer> name;
 };
 } // namespace connection
 
@@ -32,9 +31,9 @@ public:
     void open(SerialPort::ComPort com);
 
     void requestItems();
-    void requestImage(const std::string& item);
+    void requestImage(const Ref<CBuffer>& item);
     void requestCurrentItem();
-    void setCurrentItem(const std::string& item);
+    void setCurrentItem(const Ref<CBuffer>& item);
 
     void poll(connection::Availability* avails);
 
