@@ -33,7 +33,19 @@ enum {
     BoxshotTop = 10,
     BoxshotBottom = 20,
     BoxshotShift = 1,
-    BoxshotDelay = 10
+    BoxshotDelay = 10,
+    ArrowWidth = 5,
+    ArrowHeight = 7
+};
+
+const char arrow[ArrowHeight][ArrowWidth] = {
+    { 0, 0, 1, 0, 0 },
+    { 0, 1, 1, 1, 0 },
+    { 1, 1, 1, 1, 1 },
+    { 0, 1, 1, 1, 0 },
+    { 0, 1, 1, 1, 0 },
+    { 0, 1, 1, 1, 0 },
+    { 0, 1, 1, 1, 0 }
 };
 
 static inline void setMode(int mode)
@@ -54,6 +66,17 @@ static void clear(unsigned char color)
 {
     unsigned char* VGA = Screen::screen()->ptr();
     memset(VGA, color, 320 * 200);
+}
+
+static inline void drawArrow(int x, int y, unsigned char color, bool flip)
+{
+    unsigned char* VGA = Screen::screen()->ptr();
+    for (int r = 0; r < ArrowHeight; ++r) {
+        for (int c = 0; c < ArrowWidth; ++c) {
+            if (arrow[flip ? ArrowHeight - r - 1 : r][c])
+                *(VGA + + ((y + r) * 320) + x + c) = color;
+        }
+    }
 }
 
 static void __interrupt __far ctrlCHandler()
@@ -202,6 +225,9 @@ void Engine::update()
         mSmallFont->drawText(ItemLeft, y, BoxshotLeft - 10, y + 10, ItemColor, mItems->at(i)->name->ptr());
         y += ItemHeight;
     }
+
+    drawArrow(BoxshotLeft - 8, ItemTop - 1, mFirstItem > 0 ? ItemColor : SelectedItemColor, false);
+    drawArrow(BoxshotLeft - 8, 188, mFirstItem + mVisibleItems >= mItems->size() ? SelectedItemColor : ItemColor, true);
 }
 
 struct BoxAnimation
