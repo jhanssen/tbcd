@@ -21,7 +21,7 @@ void SerialPort::open(ComPort com, long int bps)
         return;
 
     Log::log("serial open %ld\n", bps);
-    const int r = serial_open(com, bps, 8, 'n', 1, SER_HANDSHAKING_NONE);
+    const int r = serial_open(com, bps, 8, 'n', 1, SER_HANDSHAKING_RTSCTS);
     if (r == SER_SUCCESS) {
         mCom = com;
     }

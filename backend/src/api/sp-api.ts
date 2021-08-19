@@ -131,7 +131,8 @@ export async function initialize(opts: SPAPIOptions) {
     const apiStatus = getStatus();
 
     const port = new SerialPort(opts.pcComPort, {
-        baudRate: opts.pcComBps
+        baudRate: opts.pcComBps,
+        rtscts: true
     }, (err?: Error | null) => {
         if (err) {
             console.error("pc com port open error", err.message);
