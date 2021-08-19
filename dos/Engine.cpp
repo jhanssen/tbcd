@@ -28,6 +28,7 @@ enum {
     SelectedItemColor = 251,
     ItemLeft = 10,
     ItemTop = 30,
+    ItemHeight = 12,
     BoxshotLeft = 230,
     BoxshotTop = 10,
     BoxshotBottom = 20,
@@ -102,7 +103,7 @@ static void __interrupt __far keyboardHandler()
 Engine::Engine(long int bps)
     : mDone(false), mLargeFont(new Font()), mSmallFont(new Font()),
       mItems(new List<Ref<connection::Item> >()), mHighlighted(0), mSelected(-1),
-      mConnection(new Connection(bps))
+      mFirstItem(0), mVisibleItems(0), mConnection(new Connection(bps))
 {
     mLargeFont->load("font\\large.bin", 28, 44, 1, 14, 1, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`{|}~", false);
     mSmallFont->load("font\\small.bin", 16, 48, 1, 8, 0, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", true);
@@ -117,6 +118,13 @@ Engine::Engine(long int bps)
     // }
 
     sEngine = this;
+
+    // calculate how many items we can fit
+    int y = ItemTop;
+    while (y + ItemHeight <= 200) {
+        ++mVisibleItems;
+        y += ItemHeight;
+    }
 
     // setup ctrl-c handler
     oldCtrlCISR = _dos_getvect(0x23);
@@ -182,15 +190,17 @@ void Engine::update()
 
     mLargeFont->drawText(ItemLeft, 10, BoxshotLeft - 10, 30, 255, title);
 
+    const int max = std::min<int>(mItems->size() - mFirstItem, mVisibleItems);
+
     int y = ItemTop;
-    for (unsigned int i = 0; i < mItems->size(); ++i) {
+    for (unsigned int i = mFirstItem; i < mFirstItem + max; ++i) {
         if (i == mSelected)  {
             fillRect(ItemLeft - 1, y - 2, BoxshotLeft - 10, y + 10 + 1, SelectedItemColor);
         } else if (i == mHighlighted) {
             fillRect(ItemLeft - 1, y - 2, BoxshotLeft - 10, y + 10 + 1, HighlightColor);
         }
         mSmallFont->drawText(ItemLeft, y, BoxshotLeft - 10, y + 10, ItemColor, mItems->at(i)->name->ptr());
-        y += 12;
+        y += ItemHeight;
     }
 }
 
@@ -298,6 +308,8 @@ void Engine::process()
     } else if (upPressed) {
         upPressed = false;
         if (mHighlighted > 0) {
+            if (mHighlighted == mFirstItem)
+                --mFirstItem;
             --mHighlighted;
             mImagePending = mItems->at(mHighlighted)->disc;
             mImageTimer.start(18);
@@ -310,6 +322,8 @@ void Engine::process()
     } else if (downPressed) {
         downPressed = false;
         if (mHighlighted < mItems->size() - 1) {
+            if (mHighlighted - mFirstItem + 1 == mVisibleItems)
+                ++mFirstItem;
             ++mHighlighted;
             mImagePending = mItems->at(mHighlighted)->disc;
             mImageTimer.start(18);

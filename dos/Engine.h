@@ -34,6 +34,8 @@ private:
     List<Ref<connection::Item> >* mItems;
     unsigned int mHighlighted;
     int mSelected;
+    int mFirstItem;
+    int mVisibleItems;
     Connection* mConnection;
 
     static Engine* sEngine;
