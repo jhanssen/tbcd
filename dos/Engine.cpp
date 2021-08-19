@@ -128,6 +128,7 @@ Engine::Engine(long int bps)
       mItems(new List<Ref<connection::Item> >()), mHighlighted(0), mSelected(-1),
       mFirstItem(0), mVisibleItems(0), mConnection(new Connection(bps))
 {
+    Log::log("engine with bps %ld\n", bps);
     mLargeFont->load("font\\large.bin", 28, 44, 1, 14, 1, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`{|}~", false);
     mSmallFont->load("font\\small.bin", 16, 48, 1, 8, 0, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", true);
     if (!mLargeFont->isValid() || !mSmallFont->isValid()) {

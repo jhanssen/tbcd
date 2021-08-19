@@ -11,6 +11,7 @@
 Connection::Connection(long int bps, SerialPort::ComPort com)
     : mTopItem(0), mBps(bps), mReadOffset(0)
 {
+    Log::log("connection with bps %ld %ld\n", bps, mBps);
     mSerial.open(com, bps);
 }
 
@@ -20,6 +21,7 @@ Connection::~Connection()
 
 void Connection::open(SerialPort::ComPort com)
 {
+    Log::log("connection open with bps %ld\n", mBps);
     mSerial.open(com, mBps);
 }
 
