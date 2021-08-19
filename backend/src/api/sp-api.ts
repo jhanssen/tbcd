@@ -157,13 +157,20 @@ export async function initialize(opts: SPAPIOptions) {
         } else {
             dataBuffer = data;
         }
-        const processed = processData(processOpts, dataBuffer);
-        if (processed === -1 || dataOffset + processed === Buffer.byteLength(dataBuffer)) {
-            dataOffset = 0;
-            dataBuffer = undefined;
-            console.log("clearing buffer");
-        } else {
-            dataOffset += processed
+        let processed: number;
+        for (;;) {
+            processed = processData(processOpts, dataBuffer);
+            if (processed === -1 || dataOffset + processed === Buffer.byteLength(dataBuffer)) {
+                dataOffset = 0;
+                dataBuffer = undefined;
+                console.log("clearing buffer");
+                break;
+            } else if (processed === 0) {
+                // nothing to do
+                break;
+            } else {
+                dataOffset += processed
+            }
         }
     });
     api.on("currentSha1", (sha1: string|undefined) => {
