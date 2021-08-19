@@ -331,8 +331,11 @@ void Engine::process()
                     break;
                 }
             }
-            if (mSelected == -1)
+            if (mSelected == -1) {
                 mSelectedPending = current;
+            } else {
+                needsUpdate = true;
+            }
         }
     }
 
@@ -373,7 +376,7 @@ void Engine::process()
         }
     }
     // enter
-    if (extendedKeys[0x1c] == 1) {
+    if (normalKeys[0x1c] == 1 || extendedKeys[0x1c] == 1) {
         enterPressed = true;
     } else if (enterPressed) {
         enterPressed = false;
