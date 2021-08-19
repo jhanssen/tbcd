@@ -99,10 +99,10 @@ static void __interrupt __far keyboardHandler()
     outp(0x20, 0x20);
 }
 
-Engine::Engine()
+Engine::Engine(long int bps)
     : mDone(false), mLargeFont(new Font()), mSmallFont(new Font()),
       mItems(new List<Ref<connection::Item> >()), mHighlighted(0), mSelected(-1),
-      mConnection(new Connection)
+      mConnection(new Connection(bps))
 {
     mLargeFont->load("font\\large.bin", 28, 44, 1, 14, 1, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`{|}~", false);
     mSmallFont->load("font\\small.bin", 16, 48, 1, 8, 0, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~", true);

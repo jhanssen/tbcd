@@ -8,10 +8,10 @@
 #define LOGCONN(...) Log::log(__VA_ARGS__)
 #endif
 
-Connection::Connection(SerialPort::ComPort com)
-    : mTopItem(0), mReadOffset(0)
+Connection::Connection(long int bps, SerialPort::ComPort com)
+    : mTopItem(0), mBps(bps), mReadOffset(0)
 {
-    mSerial.open(com, 115200L);
+    mSerial.open(com, bps);
 }
 
 Connection::~Connection()
@@ -20,7 +20,7 @@ Connection::~Connection()
 
 void Connection::open(SerialPort::ComPort com)
 {
-    mSerial.open(com, 115200L);
+    mSerial.open(com, mBps);
 }
 
 void Connection::requestItems()

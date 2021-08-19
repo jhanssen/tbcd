@@ -9,6 +9,7 @@ interface SPAPIOptions {
     writeDir: string;
     ideComPort: string;
     pcComPort: string;
+    pcComBps: number;
 }
 
 let dataBuffer: Buffer|undefined = undefined;
@@ -130,7 +131,7 @@ export async function initialize(opts: SPAPIOptions) {
     const apiStatus = getStatus();
 
     const port = new SerialPort(opts.pcComPort, {
-        baudRate: 115200
+        baudRate: opts.pcComBps
     }, (err?: Error | null) => {
         if (err) {
             console.error("pc com port open error", err.message);

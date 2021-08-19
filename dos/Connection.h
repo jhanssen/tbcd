@@ -25,7 +25,7 @@ struct Item
 class Connection
 {
 public:
-    Connection(SerialPort::ComPort com = SerialPort::ComNone);
+    Connection(long int bps = 115200L, SerialPort::ComPort com = SerialPort::ComNone);
     ~Connection();
 
     void open(SerialPort::ComPort com);
@@ -51,7 +51,7 @@ private:
     List<Ref<connection::Item> > mItems;
     Ref<U8Buffer> mImage;
     Ref<CBuffer> mCurrentItem;
-
+    long int mBps;
     int mReadOffset;
     U8Buffer mRead;
 };

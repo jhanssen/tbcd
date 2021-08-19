@@ -12,7 +12,7 @@
 class Engine
 {
 public:
-    Engine();
+    Engine(long int bps);
     ~Engine();
 
     bool done() const { return mDone; }

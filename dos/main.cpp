@@ -1,10 +1,18 @@
 #include "Engine.h"
 #include "Log.h"
+#include <stdlib.h>
 
-int main(int, char**)
+int main(int argc, char** argv)
 {
+    long int bps = 0;
+    if (argc > 1) {
+        bps = atol(argv[1]);
+    }
+    if (bps <= 0) {
+        bps = 115200L;
+    }
     Log::log("before engine\n");
-    Engine engine;
+    Engine engine(bps);
     Log::log("after engine\n");
     for (;;) {
         if (engine.done())
