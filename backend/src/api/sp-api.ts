@@ -40,7 +40,7 @@ function processData(opts: ProcessOptions, data: Buffer) {
     assert(dataOffset <= len);
     if (len - dataOffset < 3)
         return 0;
-    switch (data.toString("ascii", dataOffset, 2)) {
+    switch (data.toString("ascii", dataOffset, dataOffset + 2)) {
     case "it": {
         if (data[2] !== 0) {
             console.error("invalid item message");
@@ -118,7 +118,7 @@ function processData(opts: ProcessOptions, data: Buffer) {
         }).catch((e: Error) => { console.error("api read image error", e.message); });
         return (z1 + 1) - dataOffset; }
     default:
-        console.error(`unhandled dos message ${data.toString("ascii", dataOffset, 2)}`);
+        console.error(`unhandled dos message ${data.toString("ascii", dataOffset, dataOffset + 2)} at ${dataOffset}`);
         break;
     }
     return -1;
