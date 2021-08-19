@@ -75,12 +75,16 @@ void Font::drawText(unsigned short x0, unsigned short y0, unsigned short x1, uns
     const unsigned short ymax = std::min<unsigned short>(y1, 200);
 #if 0
     // draw line by line?
+    const unsigned short expand = (mCharWidth * 8) + 1;
     for (unsigned short y = y0; y < ymax; ++y) {
         if (y - y0 >= mCharHeight)
             break;
         unsigned short x = x0;
         const char* cur = text;
         while (*cur != '\0') {
+            if (x + expand >= xmax)
+                break;
+
             char curchar = *cur;
             if (!mLowercase && curchar >= 97 && curchar <= 122) {
                 // convert a-z to A-Z
@@ -97,9 +101,7 @@ void Font::drawText(unsigned short x0, unsigned short y0, unsigned short x1, uns
                 }
             }
 
-            x += (mCharWidth * 8) + 1;
-            if (x >= xmax)
-                break;
+            x += expand;
 
             ++cur;
         }
@@ -109,6 +111,9 @@ void Font::drawText(unsigned short x0, unsigned short y0, unsigned short x1, uns
     const unsigned short expand = mCharWidth * 8;
     const char* cur = text;
     while (*cur != '\0') {
+        if (x + expand >= xmax)
+            break;
+
         char curchar = *cur;
         if (!mLowercase && curchar >= 97 && curchar <= 122) {
             // convert a-z to A-Z
@@ -140,8 +145,6 @@ void Font::drawText(unsigned short x0, unsigned short y0, unsigned short x1, uns
         }
 
         x += expand;
-        if (x >= xmax)
-            break;
 
         ++cur;
     }
