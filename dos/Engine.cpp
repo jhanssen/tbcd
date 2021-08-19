@@ -140,6 +140,7 @@ Engine::Engine(long int bps)
 
     mConnection->open(SerialPort::Com1);
     mConnection->requestItems();
+    mConnection->requestCurrentItem();
 }
 
 Engine::~Engine()
@@ -269,6 +270,18 @@ void Engine::process()
             mImage = img;
             needsUpdate = true;
             boxAnimation.reset();
+        }
+    }
+    if (avail.currentItem > 0) {
+        Ref<CBuffer> current = mConnection->nextCurrentItem();
+        // find this in our list of items
+        if (mItems) {
+            for (unsigned int i = 0; i < mItems->size(); ++i) {
+                if (mItems->at(i)->disc->compare(*current) == 0) {
+                    mSelected = i;
+                    break;
+                }
+            }
         }
     }
 

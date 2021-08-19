@@ -24,6 +24,8 @@ public:
     void append(const Ref<Buffer>& buffer);
     void take(Ref<Buffer>& buffer);
 
+    int compare(const Buffer& other);
+
     void clear();
 
 private:
@@ -144,6 +146,20 @@ template<typename T>
 inline T* Buffer<T>::ptr()
 {
     return mPtr;
+}
+
+template<typename T>
+inline int Buffer<T>::compare(const Buffer& other)
+{
+    int c = mSize - other.mSize;
+    if (c != 0)
+        return c;
+    for (int i = 0; i < mSize; ++i) {
+        c = mPtr[i] - other.mPtr[i];
+        if (c != 0)
+            return c;
+    }
+    return 0;
 }
 
 typedef Buffer<char> CBuffer;
