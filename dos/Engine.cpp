@@ -240,6 +240,8 @@ inline void BoxAnimation::draw(const Ref<Decoder::Image>& image, bool force)
 
 void Engine::process()
 {
+    static BoxAnimation boxAnimation;
+
     bool needsUpdate = false;
 
     // poll connection
@@ -266,6 +268,7 @@ void Engine::process()
             img->applyPalette();
             mImage = img;
             needsUpdate = true;
+            boxAnimation.reset();
         }
     }
 
@@ -304,8 +307,7 @@ void Engine::process()
         update();
 
     if (!mImage.empty()) {
-        static BoxAnimation animation;
-        animation.draw(mImage, needsUpdate);
+        boxAnimation.draw(mImage, needsUpdate);
     }
 
     mScreen.flip();
