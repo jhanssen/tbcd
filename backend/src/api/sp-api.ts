@@ -119,7 +119,6 @@ function processData(opts: ProcessOptions, data: Buffer) {
         return (z1 + 1) - dataOffset; }
     default:
         console.error(`unhandled dos message ${data.toString("ascii", dataOffset, 2)}`);
-        dataOffset = Buffer.byteLength(data);
         break;
     }
     return -1;
