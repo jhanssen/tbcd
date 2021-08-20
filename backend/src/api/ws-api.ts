@@ -88,8 +88,7 @@ export async function initialize(opts: WSAPIOptions) {
         };
 
         const currentFileSender = (file?: string) => {
-            queue.currentFile = file ? file : undefined;
-            send("currentFile", undefined, queue.currentFile);
+            send("currentFile", undefined, file);
         };
         const openSender = () => {
             send("open", undefined);

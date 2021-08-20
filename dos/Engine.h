@@ -22,6 +22,7 @@ public:
 
 private:
     void update();
+    void rebuildQueueValues();
 
 private:
     bool mDone;
@@ -32,6 +33,8 @@ private:
     Ref<Decoder::Image> mImage;
     Screen mScreen;
     List<Ref<connection::Item> >* mItems;
+    Ref<List<Ref<CBuffer> > > mQueue;
+    unsigned short* mQueueValues;
     unsigned int mHighlighted;
     Ref<CBuffer> mSelectedPending;
     int mSelected;

@@ -5,6 +5,7 @@
 #include <serial.h>
 #include <conio.h>
 #include <dos.h>
+#include <stdio.h>
 #include <string.h>
 
 Engine* Engine::sEngine = 0;
@@ -26,6 +27,7 @@ enum {
     ItemColor = 253,
     HighlightColor = 252,
     SelectedItemColor = 251,
+    QueueColor = 250,
     ItemLeft = 10,
     ItemTop = 30,
     ItemHeight = 12,
@@ -126,8 +128,9 @@ static void __interrupt __far keyboardHandler()
 
 Engine::Engine(long int bps)
     : mDone(false), mLargeFont(new Font()), mSmallFont(new Font()),
-      mItems(new List<Ref<connection::Item> >()), mHighlighted(0), mSelected(-1),
-      mFirstItem(0), mVisibleItems(0), mConnection(new Connection(bps))
+      mItems(new List<Ref<connection::Item> >()), mQueueValues(0),
+      mHighlighted(0), mSelected(-1), mFirstItem(0), mVisibleItems(0),
+      mConnection(new Connection(bps))
 {
     Log::log("engine with bps %ld\n", bps);
     mLargeFont->load("font\\large.bin", 28, 44, 1, 14, 1, " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`{|}~", false);
@@ -174,6 +177,7 @@ Engine::Engine(long int bps)
     mConnection->open(SerialPort::Com1);
     mConnection->requestItems();
     mConnection->requestCurrentItem();
+    mConnection->requestQueue();
 }
 
 Engine::~Engine()
@@ -201,6 +205,8 @@ void Engine::cleanup()
     mItems = 0;
     delete mConnection;
     mConnection = 0;
+    delete[] mQueueValues;
+    mQueueValues = 0;
     mSmallFont.reset();
     mLargeFont.reset();
 
@@ -223,6 +229,13 @@ void Engine::update()
             fillRect(ItemLeft - 1, y - 2, BoxshotLeft - 10, y + 10 + 1, HighlightColor);
         }
         mSmallFont->drawText(ItemLeft, y, BoxshotLeft - 10, y + 10, ItemColor, mItems->at(i)->name->ptr());
+
+        if (mQueueValues && mQueueValues[i] > 0) {
+            char buf[3];
+            snprintf(buf, sizeof(buf), "%hu", mQueueValues[i]);
+            mSmallFont->drawText(1, y, ItemLeft, y + 10, QueueColor, buf);
+        }
+
         y += ItemHeight;
     }
 
@@ -359,6 +372,26 @@ inline void HighlightAnimation::draw(bool force)
     }
 }
 
+void Engine::rebuildQueueValues()
+{
+    if (mQueueValues)
+        delete mQueueValues;
+    if (!mQueue || mQueue->empty() || mItems->empty()) {
+        mQueueValues = 0;
+        return;
+    }
+    mQueueValues = new unsigned short[mItems->size()];
+    memset(mQueueValues, 0, sizeof(unsigned short) * mItems->size());
+    for (unsigned int q = 0; q < mQueue->size(); ++q) {
+        for (unsigned int i = 0; i < mItems->size(); ++i) {
+            if (mQueue->at(q)->compare(*mItems->at(i)->disc) == 0) {
+                mQueueValues[i] = q + 1;
+                break;
+            }
+        }
+    }
+}
+
 void Engine::process()
 {
     static BoxAnimation boxAnimation;
@@ -396,6 +429,9 @@ void Engine::process()
                                      mHighlighted - mFirstItem,
                                      mHighlighted == mSelected ? SelectedItemColor : HighlightColor);
         }
+        if (mQueue) {
+            rebuildQueueValues();
+        }
         needsUpdate = true;
     }
     if (avail.image > 0) {
@@ -426,6 +462,10 @@ void Engine::process()
                 needsUpdate = true;
             }
         }
+    }
+    if (avail.queue > 0) {
+        mQueue = mConnection->nextQueue();
+        rebuildQueueValues();
     }
 
     if (mImagePending && mImageTimer.expired()) {

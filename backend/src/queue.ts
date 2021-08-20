@@ -21,6 +21,18 @@ let queue: Queue | undefined;
 export async function initialize(opts: QueueOptions) {
     const api = getAPI(opts.ideComPort);
 
+    api.on("currentFile", (file?: string) => {
+        if (queue !== undefined)
+            queue.currentFile = file;
+    });
+
+    api.getCurrentFile().then((file?: string) => {
+        if (queue !== undefined)
+            queue.currentFile = file;
+    }).catch((e: Error) => {
+        console.error("error getting currentFile for queue", e.message);
+    });
+
     queue = {
         queue: [],
         prev: () => {

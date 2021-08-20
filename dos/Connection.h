@@ -11,6 +11,7 @@ namespace connection {
 struct Availability
 {
     int image;
+    int queue;
     int item;
     int currentItem;
 };
@@ -33,6 +34,7 @@ public:
     void requestItems();
     void requestImage(const Ref<CBuffer>& item);
     void requestCurrentItem();
+    void requestQueue();
     void setCurrentItem(const Ref<CBuffer>& item);
 
     void poll(connection::Availability* avails);
@@ -40,6 +42,7 @@ public:
     Ref<connection::Item> nextItem();
     Ref<Decoder::Image> nextImage();
     Ref<CBuffer> nextCurrentItem();
+    Ref<List<Ref<CBuffer> > > nextQueue();
 
 private:
     bool parseMessage();
@@ -51,6 +54,7 @@ private:
     List<Ref<connection::Item> > mItems;
     Ref<U8Buffer> mImage;
     Ref<CBuffer> mCurrentItem;
+    Ref<List<Ref<CBuffer> > > mQueue, mPendingQueue;
     long int mBps;
     int mReadOffset;
     U8Buffer mRead;
@@ -87,6 +91,16 @@ inline Ref<CBuffer> Connection::nextCurrentItem()
         return ret;
     }
     return Ref<CBuffer>();
+}
+
+inline Ref<List<Ref<CBuffer> > > Connection::nextQueue()
+{
+    if (mQueue) {
+        Ref<List<Ref<CBuffer> > > ret = mQueue;
+        mQueue.reset();
+        return ret;
+    }
+    return Ref<List<Ref<CBuffer> > >();
 }
 
 #endif // CONNECTION_H

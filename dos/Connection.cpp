@@ -32,6 +32,13 @@ void Connection::requestItems()
     mItems.clear();
 }
 
+void Connection::requestQueue()
+{
+    mSerial.write("qr\0", 3);
+    mPendingQueue.reset();
+    mQueue.reset();
+}
+
 void Connection::requestImage(const Ref<CBuffer>& item)
 {
     mSerial.write("im", 2);
@@ -60,6 +67,36 @@ bool Connection::parseMessage()
     assert(mReadOffset <= mRead.size());
     const unsigned int sz = mRead.size() - mReadOffset;
     const unsigned char* ptr = mRead.ptr() + mReadOffset;
+
+    // add to queue if we need more items
+    if (mPendingQueue && mPendingQueue->size() < mPendingQueue->capacity()) {
+        int fe = -1;
+        // find one null terminate
+        unsigned int n = 0;
+        for (; n < sz; ++n) {
+            if (ptr[n] == '\0') {
+                fe = n;
+                break;
+            }
+        }
+        if (fe != -1) {
+            Ref<CBuffer> item(new CBuffer);
+            item->append((const char*)ptr, fe + 1);
+            // add to pending queue
+            mPendingQueue->push(item);
+
+            if (mPendingQueue->size() == mPendingQueue->capacity()) {
+                // we have the entire queue
+                mQueue = mPendingQueue;
+                mPendingQueue.reset();
+            }
+
+            mReadOffset += fe + 1;
+            return true;
+        }
+        return false;
+    }
+
     if (sz < 2)
         return false;
     LOGCONN("parse, msg is %c%c (size %u)\n", ptr[0], ptr[1], sz);
@@ -136,6 +173,29 @@ bool Connection::parseMessage()
             mReadOffset += len + 4;
             return true;
         }
+    } else if (ptr[0] == 'q' && ptr[1] == 'u') {
+        // queue, next two bytes is the unsigned short size
+        if (sz < 4)
+            return false;
+
+        // assume we're little endian
+        union {
+            unsigned short len;
+            unsigned char lenbuf[2];
+        };
+        lenbuf[0] = ptr[2];
+        lenbuf[1] = ptr[3];
+
+        if (len == 0) {
+            mQueue.reset(new List<Ref<CBuffer> >);
+            mPendingQueue.reset();
+        } else {
+            mQueue.reset();
+            mPendingQueue.reset(new List<Ref<CBuffer> >(len));
+        }
+
+        mReadOffset += 4;
+        return true;
     }
     return false;
 }
@@ -168,4 +228,5 @@ void Connection::poll(connection::Availability* avails)
     avails->item = mItems.size() - mTopItem;
     avails->image = mImage ? 1 : 0;
     avails->currentItem = mCurrentItem ? 1 : 0;
+    avails->queue = mQueue ? 1 : 0;
 }

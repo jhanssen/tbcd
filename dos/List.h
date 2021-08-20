@@ -18,12 +18,14 @@ public:
     void reset();
     void clear();
     void resize(unsigned int size);
+    void reserve(unsigned int size);
 
     void push(const T& item);
     void pop();
 
-    unsigned int size() const;
     bool empty() const;
+    unsigned int size() const;
+    unsigned int capacity() const;
 
     T& front();
     const T& front() const;
@@ -37,7 +39,6 @@ public:
     const T& at(unsigned int pos) const;
 
 private:
-    void realloc(unsigned int size);
     void copyFrom(const List& other);
 
 private:
@@ -47,7 +48,7 @@ private:
 
 template<typename T>
 inline List<T>::List(unsigned int size)
-    : mData(0), mCapacity(size), mSize(size)
+    : mData(0), mCapacity(size), mSize(0)
 {
     if (size > 0) {
         mData = (T*)malloc(size * sizeof(T));
@@ -76,7 +77,7 @@ inline List<T>& List<T>::operator=(const List& other)
 }
 
 template<typename T>
-inline void List<T>::realloc(unsigned int size)
+inline void List<T>::reserve(unsigned int size)
 {
     if (size > mCapacity) {
         // growth strategy
@@ -104,7 +105,7 @@ inline void List<T>::resize(unsigned int size)
     if (!size) {
         reset();
     } else {
-        realloc(size);
+        reserve(size);
         mSize = size;
     }
 }
@@ -151,7 +152,7 @@ template<typename T>
 inline void List<T>::push(const T& item)
 {
     if (mSize >= mCapacity)
-        realloc(mSize + 1);
+        reserve(mSize + 1);
     assert(mSize < mCapacity);
     new (mData + mSize) T(item);
     ++mSize;
@@ -169,6 +170,12 @@ template<typename T>
 unsigned int List<T>::size() const
 {
     return mSize;
+}
+
+template<typename T>
+unsigned int List<T>::capacity() const
+{
+    return mCapacity;
 }
 
 template<typename T>

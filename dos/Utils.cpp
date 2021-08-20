@@ -85,7 +85,8 @@ void reservePalette()
         { 225, 225, 225 }, // white
         { 180, 40,  40  }, // darker red
         { 225, 180, 180 }, // lighter red
-        { 190, 190, 190 }  // light grey
+        { 190, 190, 190 }, // light grey
+        { 180, 180, 40  }  // yellowish
     };
 
     const unsigned short num = sizeof(self) / sizeof(self[0]);

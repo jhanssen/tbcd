@@ -2,6 +2,7 @@ import { getAPI, getStatus } from "./index";
 import { API } from "./common";
 import { APIStatus } from "./status";
 import { readDataFile } from "../file";
+import { Queue, getQueue } from "../queue";
 import assert from "../assert";
 import SerialPort from "serialport";
 
@@ -30,6 +31,7 @@ function nameOf(n: string) {
 
 interface ProcessOptions {
     api: API;
+    queue: Queue;
     apiStatus: APIStatus,
     writeDir: string;
     port: SerialPort;
@@ -117,6 +119,32 @@ function processData(opts: ProcessOptions, data: Buffer) {
             opts.port.write(data);
         }).catch((e: Error) => { console.error("api read image error", e.message); });
         return (z1 + 1) - dataOffset; }
+    case "qr": {
+        console.log("dos wants queue");
+        if (opts.queue.queue.length === 0) {
+            const qlen = Buffer.alloc(4);
+            qlen.write("qu", 0, 2);
+            opts.port.write(qlen);
+        } else {
+            opts.api.getImages().then(imgs => {
+                const q = opts.queue.queue.map(e => {
+                    for (const i of imgs) {
+                        if (i.name === e)
+                            return i.sha1;
+                    }
+                    return undefined;
+                }).filter(e => e !== undefined);
+                const qlen = Buffer.alloc(4);
+                qlen.write("qu", 0, 2);
+                qlen.writeUInt16LE(q.length, 2);
+                opts.port.write(qlen);
+                for (const qi of q) {
+                    assert(typeof qi === "string");
+                    opts.port.write(zero(qi));
+                }
+            }).catch((e: Error) => { throw e });
+        }
+        return 3; }
     default:
         console.error(`unhandled dos message ${data.toString("ascii", dataOffset, dataOffset + 2)} at ${dataOffset}`);
         break;
@@ -137,8 +165,11 @@ export async function initialize(opts: SPAPIOptions) {
         }
     });
 
+    const queue = getQueue();
+
     const processOpts: ProcessOptions = {
         api,
+        queue,
         port,
         apiStatus,
         writeDir: opts.writeDir
