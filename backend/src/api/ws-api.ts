@@ -31,7 +31,11 @@ export async function initialize(opts: WSAPIOptions) {
         const paths = process.env.PATH.split(":");
         for (const p of paths) {
             const cur = path.join(p, "convert");
-            fs.access(cur, fsconstants.R_OK | fsconstants.X_OK).then(() => {
+            fs.stat(cur).then(s => {
+                if (s.isFile())
+                    return fs.access(cur, fsconstants.R_OK | fsconstants.X_OK);
+                throw new Error("not a file");
+            }).then(() => {
                 if (convpath === undefined) {
                     convpath = cur;
                     console.log("got path to convert", convpath);
