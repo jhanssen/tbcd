@@ -305,10 +305,10 @@ inline void HighlightAnimation::reset(const Ref<Font>& f, const Ref<CBuffer>& t,
     text = t;
     line = l;
     color = c;
-    // exclude the \0
     left = 0;
     cur = 0;
     edge = true;
+    // exclude the \0
     unsigned short width = f->width(t->size() - 1);
     if (width <= BoxshotLeft - 10 - ItemLeft) {
         // no need to animate
