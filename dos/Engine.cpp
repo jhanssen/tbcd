@@ -557,7 +557,12 @@ void Engine::process()
     } else if (spacePressed) {
         spacePressed = false;
         // select this item
+        const bool queueEmpty = !mQueue || mQueue->empty();
         addOrRemoveQueue(mHighlighted);
+        if (queueEmpty && mQueue && mQueue->size() == 1) {
+            // make the first item of the queue current
+            mConnection->setCurrentItem(mQueue->at(0));
+        }
     }
     if (needsUpdate)
         update();
