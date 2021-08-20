@@ -23,6 +23,8 @@ public:
     void push(const T& item);
     void pop();
 
+    void remove(unsigned int item);
+
     bool empty() const;
     unsigned int size() const;
     unsigned int capacity() const;
@@ -164,6 +166,19 @@ inline void List<T>::pop()
     if (mSize > 0) {
         mData[--mSize].~T();
     }
+}
+
+template<typename T>
+inline void List<T>::remove(unsigned int item)
+{
+    if (item >= mSize)
+        return;
+    // copy over
+    for (unsigned int i = item; i < mSize - 1; ++i) {
+        mData[i] = mData[i + 1];
+    }
+    // destroy last item
+    mData[--mSize].~T();
 }
 
 template<typename T>

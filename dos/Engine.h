@@ -23,6 +23,8 @@ public:
 private:
     void update();
     void rebuildQueueValues();
+    void clearQueue();
+    void addOrRemoveQueue(int item);
 
 private:
     bool mDone;

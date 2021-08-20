@@ -63,6 +63,14 @@ void Connection::setCurrentItem(const Ref<CBuffer>& item)
 void Connection::setQueue(const Ref<List<Ref<CBuffer> > >& queue)
 {
     mSerial.write("qs", 2);
+
+    if (queue.empty()) {
+        // clear queue
+        const unsigned short sz = 0;
+        mSerial.write((const unsigned char*)&sz, 2);
+        return;
+    }
+
     const unsigned short sz = queue->size();
     // assume little endian
     mSerial.write((const unsigned char*)&sz, 2);

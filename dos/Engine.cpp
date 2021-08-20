@@ -392,6 +392,35 @@ void Engine::rebuildQueueValues()
     }
 }
 
+void Engine::clearQueue()
+{
+    mConnection->setQueue(Ref<List<Ref<CBuffer> > >());
+}
+
+void Engine::addOrRemoveQueue(int item)
+{
+    if (item >= mItems->size())
+        return;
+
+    if (!mQueue)
+        mQueue.reset(new List<Ref<CBuffer> >);
+    const Ref<CBuffer>& ritem = mItems->at(item)->disc;
+    // check if this item is in the queue, if so remove
+    bool removed = false;
+    for (unsigned int q = 0; q < mQueue->size(); ++q) {
+        if (mQueue->at(q)->compare(*ritem) == 0) {
+            // remove
+            mQueue->remove(q);
+            removed = true;
+        }
+    }
+    if (!removed)
+        mQueue->push(ritem);
+    if (mQueue->size() == 0)
+        mQueue.reset();
+    mConnection->setQueue(mQueue);
+}
+
 void Engine::process()
 {
     static BoxAnimation boxAnimation;
@@ -477,6 +506,8 @@ void Engine::process()
     static bool downPressed = false;
     static bool upPressed = false;
     static bool enterPressed = false;
+    static bool spacePressed = false;
+
     // arrow up
     if (extendedKeys[0x48] == 1) {
         upPressed = true;
@@ -517,7 +548,16 @@ void Engine::process()
     } else if (enterPressed) {
         enterPressed = false;
         // select this item
+        clearQueue();
         mConnection->setCurrentItem(mItems->at(mHighlighted)->disc);
+    }
+    // space
+    if (normalKeys[0x39] == 1) {
+        spacePressed = true;
+    } else if (spacePressed) {
+        spacePressed = false;
+        // select this item
+        addOrRemoveQueue(mHighlighted);
     }
     if (needsUpdate)
         update();
