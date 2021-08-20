@@ -36,6 +36,7 @@ public:
     void requestCurrentItem();
     void requestQueue();
     void setCurrentItem(const Ref<CBuffer>& item);
+    void setQueue(const Ref<List<Ref<CBuffer> > >& queue);
 
     void poll(connection::Availability* avails);
 

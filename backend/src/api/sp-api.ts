@@ -16,6 +16,9 @@ interface SPAPIOptions {
 let dataBuffer: Buffer|undefined = undefined;
 let dataOffset = 0;
 
+let pendingQueue: string[]|undefined;
+let pendingQueueSize = 0;
+
 function zero(str: string) {
     const b = Buffer.alloc(str.length + 1, 0);
     b.write(str); //, 0, str.length);
@@ -66,6 +69,38 @@ function sendQueue(port: SerialPort, api: API, queue: string[]) {
 function processData(opts: ProcessOptions, data: Buffer) {
     const len = Buffer.byteLength(data);
     assert(dataOffset <= len);
+
+    // read queue items if we need more
+    if (pendingQueue && pendingQueue.length < pendingQueueSize) {
+        // scan for 0 terminate
+        const z1 = data.indexOf(0, dataOffset);
+        if (z1 === -1)
+            return 0;
+        // grab the sha1
+        const sha1 = data.toString("ascii", dataOffset, z1);
+        pendingQueue.push(sha1);
+
+        if (pendingQueue.length === pendingQueueSize) {
+            // got the entire queue, now make the queue be image names
+            const actualQueue = pendingQueue;
+            pendingQueue = undefined;
+            pendingQueueSize = 0;
+
+            opts.api.getImages().then(imgs => {
+                const q = actualQueue.map(e => {
+                    for (const i of imgs) {
+                        if (i.sha1 === e)
+                            return i.name;
+                    }
+                    return undefined;
+                }).filter(e => e !== undefined);
+
+                console.log("setting queue from dos", q);
+                opts.queue.setQueue(q as string[]);
+            }).catch((e: Error) => { console.error("error getting images for dos queue update", e.message); });
+        }
+    }
+
     if (len - dataOffset < 3)
         return 0;
     switch (data.toString("ascii", dataOffset, dataOffset + 2)) {
@@ -149,6 +184,18 @@ function processData(opts: ProcessOptions, data: Buffer) {
         console.log("dos wants queue");
         sendQueue(opts.port, opts.api, opts.queue.queue());
         return 3; }
+    case "qs": {
+        if (len - dataOffset < 4)
+            return 0;
+        pendingQueueSize = data.readUInt16LE(dataOffset + 2);
+        console.log("dos wants to set queue", pendingQueueSize);
+        if (pendingQueueSize > 0) {
+            pendingQueue = [];
+        } else {
+            // clear queue
+            opts.queue.setQueue([]);
+        }
+        return 4; }
     default:
         console.error(`unhandled dos message ${data.toString("ascii", dataOffset, dataOffset + 2)} at ${dataOffset}`);
         break;

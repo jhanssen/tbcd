@@ -60,6 +60,19 @@ void Connection::setCurrentItem(const Ref<CBuffer>& item)
     mSerial.write(item->ptr(), item->size());
 }
 
+void Connection::setQueue(const Ref<List<Ref<CBuffer> > >& queue)
+{
+    mSerial.write("qs", 2);
+    const unsigned short sz = queue->size();
+    // assume little endian
+    mSerial.write((const unsigned char*)&sz, 2);
+
+    for (unsigned short i = 0; i < sz; ++i) {
+        const Ref<CBuffer>& item = queue->at(i);
+        mSerial.write(item->ptr(), item->size());
+    }
+}
+
 bool Connection::parseMessage()
 {
     LOGCONN("top of parse\n");
