@@ -47,12 +47,18 @@ export class MainComponent implements OnInit, OnDestroy {
         sub = this.ws.onWsOpen.subscribe(isopen => {
             this.isWsOpen = isopen;
 
-            // grab the current queue
+            // grab the and listen for queues
             if (isopen) {
-                this.ws.queue().then(q => {
+                const applyQueue = (q: string[]) => {
                     this.queue = q;
                     if (this.images.length > 0)
                         this.fixQueue();
+                };
+                this.ws.onQueue.subscribe(q => {
+                    applyQueue(q);
+                });
+                this.ws.queue().then(q => {
+                    applyQueue(q);
                 }).catch(() => { });
             }
         });

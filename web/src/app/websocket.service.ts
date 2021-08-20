@@ -71,6 +71,7 @@ function discardAll<Type>(reqs: Request<PromiseResolve<Type>>[], data: Error) {
 })
 export class WebsocketService {
     private currentFileSubject = new Subject<string|undefined>();
+    private queueSubject = new Subject<string[]>();
     private ideOpenSubject = new ReplaySubject<boolean>(1);
     private wsOpenSubject = new ReplaySubject<boolean>(1);
     private wsPortNumber: number;
@@ -106,6 +107,10 @@ export class WebsocketService {
     public get onCurrentFile() {
         this.send("currentFile", undefined);
         return this.currentFileSubject;
+    }
+
+    public get onQueue() {
+        return this.queueSubject;
     }
 
     public get onIdeOpen() {
@@ -312,7 +317,7 @@ export class WebsocketService {
                         if (typeof data.id === "number") {
                             dispatch<string[]>(data.id, data.data, this.queueReqs);
                         } else {
-                            console.error("no id for queue response");
+                            this.queueSubject.next(data.data);
                         }
                     } else {
                         console.error("no data for queue");
