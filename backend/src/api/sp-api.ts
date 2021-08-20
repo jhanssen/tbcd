@@ -37,6 +37,32 @@ interface ProcessOptions {
     port: SerialPort;
 }
 
+function sendQueue(port: SerialPort, api: API, queue: string[]) {
+    if (queue.length === 0) {
+        const qlen = Buffer.alloc(4);
+        qlen.write("qu", 0, 2);
+        port.write(qlen);
+    } else {
+        api.getImages().then(imgs => {
+            const q = queue.map(e => {
+                for (const i of imgs) {
+                    if (i.name === e)
+                        return i.sha1;
+                }
+                return undefined;
+            }).filter(e => e !== undefined);
+            const qlen = Buffer.alloc(4);
+            qlen.write("qu", 0, 2);
+            qlen.writeUInt16LE(q.length, 2);
+            port.write(qlen);
+            for (const qi of q) {
+                assert(typeof qi === "string");
+                port.write(zero(qi));
+            }
+        }).catch((e: Error) => { throw e });
+    }
+}
+
 function processData(opts: ProcessOptions, data: Buffer) {
     const len = Buffer.byteLength(data);
     assert(dataOffset <= len);
@@ -121,29 +147,7 @@ function processData(opts: ProcessOptions, data: Buffer) {
         return (z1 + 1) - dataOffset; }
     case "qr": {
         console.log("dos wants queue");
-        if (opts.queue.queue.length === 0) {
-            const qlen = Buffer.alloc(4);
-            qlen.write("qu", 0, 2);
-            opts.port.write(qlen);
-        } else {
-            opts.api.getImages().then(imgs => {
-                const q = opts.queue.queue.map(e => {
-                    for (const i of imgs) {
-                        if (i.name === e)
-                            return i.sha1;
-                    }
-                    return undefined;
-                }).filter(e => e !== undefined);
-                const qlen = Buffer.alloc(4);
-                qlen.write("qu", 0, 2);
-                qlen.writeUInt16LE(q.length, 2);
-                opts.port.write(qlen);
-                for (const qi of q) {
-                    assert(typeof qi === "string");
-                    opts.port.write(zero(qi));
-                }
-            }).catch((e: Error) => { throw e });
-        }
+        sendQueue(opts.port, opts.api, opts.queue.queue());
         return 3; }
     default:
         console.error(`unhandled dos message ${data.toString("ascii", dataOffset, dataOffset + 2)} at ${dataOffset}`);
@@ -206,5 +210,8 @@ export async function initialize(opts: SPAPIOptions) {
     });
     api.on("currentSha1", (sha1: string|undefined) => {
         port.write(zero(`ci${sha1 || ""}`));
+    });
+    queue.on("changed", () => {
+        sendQueue(port, api, queue.queue());
     });
 }

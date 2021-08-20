@@ -13,4 +13,4 @@ export function getAPI(port: string) {
     return api;
 }
 
-export { wsInitialize, spInitialize, statusInitialize, getStatus };
+export { API, wsInitialize, spInitialize, statusInitialize, getStatus };

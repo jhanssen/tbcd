@@ -99,16 +99,21 @@ export async function initialize(opts: WSAPIOptions) {
         const errorSender = (err: Error) => {
             send("error", undefined, err.message);
         };
+        const queueSender = () => {
+            send("queue", undefined, queue.queue());
+        };
         api.on("currentFile", currentFileSender);
         api.on("open", openSender);
         api.on("close", closeSender);
         api.on("error", errorSender);
+        queue.on("changed", queueSender);
 
         ws.on("close", () => {
             api.off("currentFile", currentFileSender);
             api.off("open", openSender);
             api.off("close", closeSender);
             api.off("error", errorSender);
+            queue.off("changed", queueSender);
 
             removePing(ws);
         });
@@ -155,7 +160,7 @@ export async function initialize(opts: WSAPIOptions) {
                             error("setQueue", id, `invalid item in queue: ${invalidItem}`);
                         } else {
                             console.log("setting queue", q);
-                            queue.queue = q;
+                            queue.setQueue(q);
                             if (q.length > 0 && queue.currentFile !== q[0]) {
                                 queue.currentFile = q[0];
                                 assert(queue.currentFile !== undefined, "can't be undefined");
@@ -166,7 +171,7 @@ export async function initialize(opts: WSAPIOptions) {
                     }
                     break;
                 case "queue":
-                    send("queue", id, queue.queue);
+                    send("queue", id, queue.queue());
                     break;
                 case "queuePrev": {
                     const ret = queue.prev();
