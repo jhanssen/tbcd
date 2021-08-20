@@ -490,8 +490,7 @@ void Engine::process()
             } else {
                 needsUpdate = true;
                 if (mSelected == mHighlighted) {
-                    highlightAnimation.reset(mSmallFont, mItems->at(mSelected)->name,
-                                             mSelected - mFirstItem, SelectedItemColor);
+                    highlightAnimation.color = SelectedItemColor;
                 }
             }
         }
