@@ -99,13 +99,14 @@ function processData(opts: ProcessOptions, data: Buffer) {
                 opts.queue.setQueue(q as string[]);
             }).catch((e: Error) => { console.error("error getting images for dos queue update", e.message); });
         }
+        return (z1 + 1) - dataOffset;
     }
 
     if (len - dataOffset < 3)
         return 0;
     switch (data.toString("ascii", dataOffset, dataOffset + 2)) {
     case "it": {
-        if (data[2] !== 0) {
+        if (data[dataOffset + 2] !== 0) {
             console.error("invalid item message");
             return -1;
         }
@@ -140,7 +141,7 @@ function processData(opts: ProcessOptions, data: Buffer) {
         return 3; }
     case "ci": {
         // current item
-        if (data[2] === 0) {
+        if (data[dataOffset + 2] === 0) {
             console.log("dos wants current item");
             // get current item
             opts.api.getCurrentSha1().then(file => {
