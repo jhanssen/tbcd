@@ -466,6 +466,7 @@ void Engine::process()
     if (avail.queue > 0) {
         mQueue = mConnection->nextQueue();
         rebuildQueueValues();
+        needsUpdate = true;
     }
 
     if (mImagePending && mImageTimer.expired()) {
