@@ -33,7 +33,8 @@ enum {
     BoxshotTop = 10,
     BoxshotBottom = 20,
     BoxshotShift = 1,
-    BoxshotDelay = 10,
+    BoxAnimationDelay = 10,
+    HighlightAnimationDelay = 25,
     ArrowWidth = 5,
     ArrowHeight = 7
 };
@@ -198,12 +199,10 @@ void Engine::cleanup()
 
     delete mItems;
     mItems = 0;
-    delete mSmallFont;
-    mSmallFont = 0;
-    delete mLargeFont;
-    mLargeFont = 0;
     delete mConnection;
     mConnection = 0;
+    mSmallFont.reset();
+    mLargeFont.reset();
 
     setMode(0x3);
 }
@@ -258,7 +257,7 @@ inline void BoxAnimation::reset()
 
 inline void BoxAnimation::draw(const Ref<Decoder::Image>& image, bool force)
 {
-    if (++cur == BoxshotDelay) {
+    if (++cur == BoxAnimationDelay) {
         if (ydir == 1) {
             fillRect(BoxshotLeft, y - BoxshotShift, BoxshotLeft + image->width, y, BackgroundColor);
         } else {
@@ -276,9 +275,94 @@ inline void BoxAnimation::draw(const Ref<Decoder::Image>& image, bool force)
     }
 }
 
+struct HighlightAnimation
+{
+    HighlightAnimation();
+
+    void reset(const Ref<Font>& f, const Ref<CBuffer>& t, int l, unsigned char c);
+    void draw(bool force);
+
+    Ref<Font> font;
+    Ref<CBuffer> text;
+    int line;
+    unsigned char color;
+    unsigned short right;
+
+    unsigned short left;
+    signed short xdir;
+    unsigned char cur;
+    bool edge, nextEdge;
+};
+
+HighlightAnimation::HighlightAnimation()
+    : line(0), color(0), left(0), xdir(0), cur(0), edge(false), nextEdge(false)
+{
+}
+
+inline void HighlightAnimation::reset(const Ref<Font>& f, const Ref<CBuffer>& t, int l, unsigned char c)
+{
+    font = f;
+    text = t;
+    line = l;
+    color = c;
+    // exclude the \0
+    left = 0;
+    cur = 0;
+    edge = true;
+    unsigned short width = f->width(t->size() - 1);
+    if (width <= BoxshotLeft - 10 - ItemLeft) {
+        // no need to animate
+        xdir = 0;
+        right = 0;
+    } else {
+        xdir = 1;
+        // figure out right limit
+        right = 1;
+        for (;;) {
+            width = f->width(t->size() - 1 - right);
+            if (width <= BoxshotLeft - 10 - ItemLeft)
+                break;
+            ++right;
+        }
+    }
+}
+
+inline void HighlightAnimation::draw(bool force)
+{
+    if (!xdir)
+        return;
+    if (++cur == HighlightAnimationDelay) {
+        if (edge) {
+            edge = false;
+            return;
+        }
+        if (nextEdge) {
+            edge = true;
+            nextEdge = false;
+        }
+        const unsigned short y = ItemTop + (ItemHeight * line);
+        fillRect(ItemLeft - 1, y - 2, BoxshotLeft - 10, y + 10 + 1, color);
+        font->drawText(ItemLeft, y, BoxshotLeft - 10, y + 10, ItemColor, text->ptr() + left);
+        left += xdir;
+        if (xdir == -1 && left == 0) {
+            xdir = 1;
+            nextEdge = true;
+        } else if (left == right) {
+            xdir = -1;
+            nextEdge = true;
+        }
+        cur = 0;
+    } else if (force) {
+        const unsigned short y = ItemTop + (ItemHeight * line);
+        fillRect(ItemLeft - 1, y - 2, BoxshotLeft - 10, y + 10 + 1, color);
+        font->drawText(ItemLeft, y, BoxshotLeft - 10, y + 10, ItemColor, text->ptr() + left);
+    }
+}
+
 void Engine::process()
 {
     static BoxAnimation boxAnimation;
+    static HighlightAnimation highlightAnimation;
 
     bool needsUpdate = false;
 
@@ -306,6 +390,11 @@ void Engine::process()
                     break;
                 }
             }
+        }
+        if (mHighlighted < mItems->size()) {
+            highlightAnimation.reset(mSmallFont, mItems->at(mHighlighted)->name,
+                                     mHighlighted - mFirstItem,
+                                     mHighlighted == mSelected ? SelectedItemColor : HighlightColor);
         }
         needsUpdate = true;
     }
@@ -356,6 +445,9 @@ void Engine::process()
             if (mHighlighted == mFirstItem)
                 --mFirstItem;
             --mHighlighted;
+            highlightAnimation.reset(mSmallFont, mItems->at(mHighlighted)->name,
+                                     mHighlighted - mFirstItem,
+                                     mHighlighted == mSelected ? SelectedItemColor : HighlightColor);
             mImagePending = mItems->at(mHighlighted)->disc;
             mImageTimer.start(18);
             needsUpdate = true;
@@ -370,6 +462,9 @@ void Engine::process()
             if (mHighlighted - mFirstItem + 1 == mVisibleItems)
                 ++mFirstItem;
             ++mHighlighted;
+            highlightAnimation.reset(mSmallFont, mItems->at(mHighlighted)->name,
+                                     mHighlighted - mFirstItem,
+                                     mHighlighted == mSelected ? SelectedItemColor : HighlightColor);
             mImagePending = mItems->at(mHighlighted)->disc;
             mImageTimer.start(18);
             needsUpdate = true;
@@ -389,6 +484,7 @@ void Engine::process()
     if (!mImage.empty()) {
         boxAnimation.draw(mImage, needsUpdate);
     }
+    highlightAnimation.draw(needsUpdate);
 
     mScreen.flip();
 

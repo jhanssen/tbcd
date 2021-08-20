@@ -3,7 +3,6 @@
 
 #include "Buffer.h"
 #include "Ref.h"
-#include <string>
 
 class Font
 {
@@ -16,7 +15,7 @@ public:
               unsigned short padrow, const char* charset, bool lowercase);
 
     void drawText(unsigned short x0, unsigned short y0, unsigned short x1, unsigned short y1, unsigned char color, const char* text);
-    void drawText(unsigned short x0, unsigned short y0, unsigned short x1, unsigned short y1, unsigned char color, const std::string& text);
+    unsigned short width(unsigned short num) const;
 
     bool isValid() const;
 
@@ -34,9 +33,9 @@ inline bool Font::isValid() const
     return !mBuffer.empty();
 }
 
-inline void Font::drawText(unsigned short x0, unsigned short y0, unsigned short x1, unsigned short y1, unsigned char color, const std::string& text)
+inline unsigned short Font::width(unsigned short num) const
 {
-    drawText(x0, y0, x1, y1, color, text.c_str());
+    return num * (mCharWidth * 8);
 }
 
 #endif

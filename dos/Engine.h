@@ -25,8 +25,8 @@ private:
 
 private:
     bool mDone;
-    Font* mLargeFont;
-    Font* mSmallFont;
+    Ref<Font> mLargeFont;
+    Ref<Font> mSmallFont;
     Timer mImageTimer;
     Ref<CBuffer> mImagePending;
     Ref<Decoder::Image> mImage;
