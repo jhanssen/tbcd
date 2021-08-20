@@ -1,11 +1,14 @@
 import { getAPI, getStatus } from "./index";
 import { writeDataFile, readDataFile, unlinkDataFile } from "../file";
-import { encodeTga, encodePng } from "../image";
+import { encodeGif, encodePng } from "../image";
 import { decrypt } from "../decrypt";
 import { getQueue } from "../queue";
 import assert from "../assert";
 import fetch from "node-fetch";
 import WebSocket from "ws";
+import fs from "fs/promises";
+import { constants as fsconstants } from "fs";
+import path from "path";
 
 const WebSocketServer = WebSocket.Server;
 
@@ -22,6 +25,21 @@ interface WSAPIOptions {
 };
 
 export async function initialize(opts: WSAPIOptions) {
+    // find the convert binary
+    let convpath: string|undefined;
+    if (process.env.PATH !== undefined) {
+        const paths = process.env.PATH.split(":");
+        for (const p of paths) {
+            const cur = path.join(p, "convert");
+            fs.access(cur, fsconstants.R_OK | fsconstants.X_OK).then(() => {
+                if (convpath === undefined) {
+                    convpath = cur;
+                    console.log("got path to convert", convpath);
+                }
+            }).catch(() => {});
+        }
+    }
+
     const pings: Ping[] = [];
 
     const findPing = (ws: WebSocket) => {
@@ -235,8 +253,8 @@ export async function initialize(opts: WSAPIOptions) {
                         let fn = d.data.sha1;
                         if (d.data.thumbnail === true) {
                             fn += ".thumb.png";
-                        } else if (d.data.tga === true) {
-                            fn += ".tga";
+                        } else if (d.data.gif === true) {
+                            fn += ".gif";
                         } else {
                             fn += ".png";
                         }
@@ -256,16 +274,20 @@ export async function initialize(opts: WSAPIOptions) {
                         try {
                             const data = Buffer.from(d.data.data, "base64");
                             // const tga = new TGA(data);
-                            encodeTga(data, 100).then((buf: Buffer) => {
-                                return writeDataFile(opts.writeDir, `${d.data.sha1}.tga`, buf);
-                            }).then(() => {
-                                return encodePng(data);
-                            }).then((buf: Buffer) => {
+                            encodePng(data).then((buf: Buffer) => {
                                 return writeDataFile(opts.writeDir, `${d.data.sha1}.png`, buf);
                             }).then(() => {
                                 return encodePng(data, 200);
                             }).then((buf: Buffer) => {
                                 return writeDataFile(opts.writeDir, `${d.data.sha1}.thumb.png`, buf);
+                            }).then(() => {
+                                if (convpath)
+                                    return encodeGif(convpath, data, 100);
+                                return undefined;
+                            }).then((buf: Buffer|undefined) => {
+                                if (buf !== undefined)
+                                    return writeDataFile(opts.writeDir, `${d.data.sha1}.gif`, buf);
+                                return undefined;
                             }).then(() => {
                                 send("setBitmap", id, { sha1: d.data.sha1 });
                             }).catch(e => {

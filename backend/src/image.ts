@@ -1,8 +1,8 @@
 import sharp from "sharp";
-import TGA from "tga";
+import child_process from "child_process";
 
-export function encodeTga(buffer: Buffer, bounds: number) {
-    return new Promise<Buffer>((resolve, reject) => {
+export function encodeGif(convpath: string, buffer: Buffer, bounds: number) {
+    return new Promise<Buffer|undefined>((resolve, reject) => {
         const image = sharp(buffer);
         image
             .metadata()
@@ -41,13 +41,36 @@ export function encodeTga(buffer: Buffer, bounds: number) {
                 }
                 image
                     .resize(Math.floor(w), Math.floor(h))
-                    .ensureAlpha()
-                    .raw()
-                    .toBuffer((err: Error, data: Buffer, info: any) => {
+                    .removeAlpha()
+                    .png()
+                    .toBuffer((err: Error, data: Buffer) => {
                         if (err) {
                             reject(err);
                         } else {
-                            resolve(TGA.createTgaBuffer(info.width, info.height, data));
+                            const gif = child_process.spawn(convpath, ["-colors", "192", "png:-", "gif:-"]);
+                            const datas: Buffer[] = []
+                            let done = false;
+                            gif.stdout.on("data", (data: Buffer) => {
+                                datas.push(data);
+                            });
+                            gif.on("close", () => {
+                                if (done)
+                                    return
+                                done = true;
+                                if (datas.length === 0) {
+                                    resolve(undefined);
+                                } else {
+                                    resolve(Buffer.concat(datas));
+                                }
+                            });
+                            gif.on("error", (e: Error) => {
+                                if (done)
+                                    return
+                                done = true;
+                                reject(e);
+                            });
+                            gif.stdin.write(data);
+                            gif.stdin.end();
                         }
                     });
             });
@@ -112,46 +135,6 @@ export function encodePng(data: Buffer, bounds?: number): Promise<Buffer> {
                             reject(e);
                         });
                 });
-        }
-    });
-}
-
-export function decodeImage(decoder: string, data: Buffer): Promise<Buffer> {
-    return new Promise<Buffer>((resolve, reject) => {
-        switch (decoder) {
-        case "tga":
-            const tga = new TGA(data);
-            if (tga.pixels === undefined || tga.width === undefined || tga.height === undefined || tga.bytesPerPixel === undefined) {
-                reject(new Error("tga decode error"));
-                return;
-            }
-            sharp(Buffer.from(tga.pixels.buffer), { raw: {
-                width: tga.width,
-                height: tga.height,
-                channels: 4
-            } })
-                .png()
-                .toBuffer()
-                .then((data: Buffer) => {
-                    resolve(data);
-                }).catch(e => {
-                    reject(e);
-                });
-            break;
-        case "sharp":
-            const image = sharp(data);
-            image
-                .png()
-                .toBuffer()
-                .then((data: Buffer) => {
-                    resolve(data);
-                }).catch(e => {
-                    reject(e);
-                });
-            break;
-        default:
-            reject(new Error(`unknown decoder ${decoder}`));
-            break;
         }
     });
 }
