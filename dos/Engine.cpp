@@ -489,6 +489,10 @@ void Engine::process()
                 mSelectedPending = current;
             } else {
                 needsUpdate = true;
+                if (mSelected == mHighlighted) {
+                    highlightAnimation.reset(mSmallFont, mItems->at(mSelected)->name,
+                                             mSelected - mFirstItem, SelectedItemColor);
+                }
             }
         }
     }
