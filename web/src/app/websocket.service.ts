@@ -245,8 +245,6 @@ export class WebsocketService {
                 case "open":
                     this.ideOpenSubject.next(true);
                     break;
-                case "error":
-                    // fall through
                 case "close":
                     this.ideOpenSubject.next(false);
                     break;
@@ -389,6 +387,7 @@ export class WebsocketService {
                         } catch (e) {
                             console.error(`got error while trying to log unhandled error: ${e.message}`);
                         }
+                        this.ideOpenSubject.next(false);
                     }
                     break;
                 default:
