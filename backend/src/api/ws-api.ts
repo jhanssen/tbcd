@@ -106,6 +106,7 @@ export async function initialize(opts: WSAPIOptions) {
         };
 
         const error = (type: string, id: number | undefined, err: string) => {
+            console.log("sending error", err);
             send("error", id, { "errorType": type, "error": err });
         };
 
@@ -119,6 +120,7 @@ export async function initialize(opts: WSAPIOptions) {
             send("close", undefined);
         };
         const errorSender = (err: Error) => {
+            console.log("sending error obj", err.message);
             send("error", undefined, err.message);
         };
         const queueSender = () => {
@@ -147,6 +149,7 @@ export async function initialize(opts: WSAPIOptions) {
             send("open", undefined);
         } else {
             if (apiStatus.error) {
+                console.log("sending error apiStatus", apiStatus.error.message);
                 send("error", undefined, apiStatus.error.message);
             }
             send("close", undefined);
