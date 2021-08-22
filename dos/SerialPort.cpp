@@ -3,6 +3,19 @@
 #include <serial.h>
 #include <string.h>
 
+static inline unsigned short crc16(const unsigned char* data_p, unsigned char length)
+{
+    unsigned char x;
+    unsigned short crc = 0xFFFF;
+
+    while (length--) {
+        x = crc >> 8 ^ *data_p++;
+        x ^= x >> 4;
+        crc = (crc << 8) ^ ((unsigned short)(x << 12)) ^ ((unsigned short)(x << 5)) ^ ((unsigned short)x);
+    }
+    return crc;
+}
+
 SerialPort::SerialPort()
     : mCom(ComNone)
 {
@@ -21,7 +34,7 @@ void SerialPort::open(ComPort com, long int bps)
         return;
 
     Log::log("serial open %ld\n", bps);
-    const int r = serial_open(com, bps, 8, 'n', 1, SER_HANDSHAKING_RTSCTS);
+    const int r = serial_open(com, bps, 8, 'n', 1, SER_HANDSHAKING_NONE);
     if (r == SER_SUCCESS) {
         mCom = com;
     }
@@ -32,6 +45,14 @@ void SerialPort::close()
     if (mCom != ComNone) {
         serial_close(mCom);
         mCom = ComNone;
+    }
+}
+
+void SerialPort::setBaudRate(long int bps)
+{
+    if (mCom != ComNone) {
+        Log::log("serial, baud %ld\n", bps);
+        serial_set_bps(mCom, bps);
     }
 }
 
@@ -70,15 +91,15 @@ Ref<U8Buffer> SerialPort::read()
     return ret;
 }
 
-bool SerialPort::write(const unsigned char* data, unsigned int size)
+bool SerialPort::write(const void* data, unsigned int size)
 {
     if (mCom == ComNone)
         return false;
     int w = serial_write_buffered(mCom, (const char*)data, size);
     if (w >= 0 && w < size) {
         // block until written
-        int rem = size - w;
-        int off = w;
+        unsigned int rem = size - w;
+        unsigned int off = w;
         while (rem) {
             w = serial_write(mCom, (const char*)data + off, rem);
             if (w >= 0) {
@@ -92,6 +113,26 @@ bool SerialPort::write(const unsigned char* data, unsigned int size)
     } else if (w < 0) {
         // error
         return false;
+    }
+    return true;
+}
+
+bool SerialPort::writeNow(const void* data, unsigned int size)
+{
+    if (mCom == ComNone)
+        return false;
+    unsigned int rem = size;
+    unsigned int off = 0;
+    int w;
+    while (rem) {
+        w = serial_write(mCom, (const char*)data + off, rem);
+        if (w >= 0) {
+            rem -= w;
+            off += w;
+        } else {
+            // error
+            return false;
+        }
     }
     return true;
 }

@@ -13,7 +13,6 @@ if (typeof ideComPort !== "string") {
     process.exit(1);
 }
 const pcComPort = options("pc-com-port");
-const pcComBps = options.int("pc-com-bps", 115200);
 const wsPort = options.int("ws-port", 8089);
 const wsPingInterval = options.int("ws-ping-interval", 60000);
 
@@ -37,7 +36,7 @@ if (typeof writeDir !== "string" || writeDir.indexOf("/tbcd") === 0) {
         await wsInitialize({ writeDir, ideComPort, wsPort, wsPingInterval });
         if (typeof pcComPort === "string") {
             console.log("bringing up pc api");
-            await spInitialize({ writeDir, ideComPort, pcComPort, pcComBps });
+            await spInitialize({ writeDir, ideComPort, pcComPort });
         } else {
             console.log("not bringing up pc api");
         }

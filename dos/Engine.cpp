@@ -203,8 +203,11 @@ void Engine::cleanup()
 
     delete mItems;
     mItems = 0;
-    delete mConnection;
-    mConnection = 0;
+    if (mConnection) {
+        mConnection->close();
+        delete mConnection;
+        mConnection = 0;
+    }
     delete[] mQueueValues;
     mQueueValues = 0;
     mSmallFont.reset();

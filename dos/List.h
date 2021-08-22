@@ -59,7 +59,7 @@ inline List<T>::List(unsigned int size)
 
 template<typename T>
 inline List<T>::List(const List& other)
-    : mData(0)
+    : mData(0), mCapacity(0), mSize(0)
 {
     copyFrom(other);
 }
@@ -83,7 +83,7 @@ inline void List<T>::reserve(unsigned int size)
 {
     if (size > mCapacity) {
         // growth strategy
-        unsigned int capacity = mCapacity + std::max<unsigned int>(mCapacity * 2, 64);
+        unsigned int capacity = mCapacity + std::max<unsigned int>(std::min<unsigned int>(mCapacity * 2, 64), 2);
         if (size > capacity)
             capacity = size;
         T* data = (T*)malloc(capacity * sizeof(T));
@@ -108,7 +108,9 @@ inline void List<T>::resize(unsigned int size)
         reset();
     } else {
         reserve(size);
-        mSize = size;
+        for (; mSize < size; ++mSize) {
+            new (mData + mSize) T;
+        }
     }
 }
 

@@ -23,14 +23,18 @@ public:
     void open(ComPort com, long int bps = 9600);
     void close();
 
+    void setBaudRate(long int bps);
+
     bool isOpen() const;
     bool hasData() const;
 
     Ref<U8Buffer> read();
 
     bool write(const Ref<U8Buffer>& buffer);
-    bool write(const unsigned char* data, unsigned int size);
-    bool write(const char* data, unsigned int size);
+    bool write(const void* data, unsigned int size);
+
+    bool writeNow(const Ref<U8Buffer>& buffer);
+    bool writeNow(const void* data, unsigned int size);
 
 private:
     ComPort mCom;
@@ -43,9 +47,11 @@ inline bool SerialPort::write(const Ref<U8Buffer>& buffer)
     return write(buffer->ptr(), buffer->size());
 }
 
-inline bool SerialPort::write(const char* data, unsigned int size)
+inline bool SerialPort::writeNow(const Ref<U8Buffer>& buffer)
 {
-    return write((const unsigned char*)data, size);
+    if (!buffer)
+        return false;
+    return writeNow(buffer->ptr(), buffer->size());
 }
 
 #endif // SERIALPORT_H

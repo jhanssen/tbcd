@@ -3,9 +3,11 @@
 
 #include "Buffer.h"
 #include "Decoder.h"
+#include "List.h"
+#include "Message.h"
 #include "Ref.h"
 #include "SerialPort.h"
-#include "List.h"
+#include "Utils.h"
 
 namespace connection {
 struct Availability
@@ -30,6 +32,7 @@ public:
     ~Connection();
 
     void open(SerialPort::ComPort com);
+    void close();
 
     void requestItems();
     void requestImage(const Ref<CBuffer>& item);
@@ -47,6 +50,12 @@ public:
 
 private:
     bool parseMessage();
+    bool parseMessageData(const Ref<U8Buffer>& buf);
+
+    void requestMessage(unsigned short msgId);
+    void requestMessagePart(unsigned short msgId, unsigned short partNo);
+    void setMessagePartDone(unsigned short msgId, unsigned short partNo);
+    void setBaudRate(long int bps);
 
 private:
     SerialPort mSerial;
@@ -55,10 +64,12 @@ private:
     List<Ref<connection::Item> > mItems;
     Ref<U8Buffer> mImage;
     Ref<CBuffer> mCurrentItem;
-    Ref<List<Ref<CBuffer> > > mQueue, mPendingQueue;
+    Ref<List<Ref<CBuffer> > > mQueue;
     long int mBps;
     int mReadOffset;
     U8Buffer mRead;
+    Ref<Message> mMessage;
+    Timer mMessageTimer;
 };
 
 inline Ref<Decoder::Image> Connection::nextImage()
