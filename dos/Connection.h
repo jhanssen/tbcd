@@ -18,7 +18,7 @@ struct Availability
     int currentItem;
 };
 
-struct Item
+struct Item : public RefCounted
 {
     Ref<CBuffer> disc;
     Ref<CBuffer> name;

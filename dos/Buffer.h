@@ -6,7 +6,7 @@
 #include <string.h>
 
 template<typename T>
-class Buffer
+class Buffer : public RefCounted
 {
 public:
     Buffer(unsigned int size = 0);

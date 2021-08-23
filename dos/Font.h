@@ -4,7 +4,7 @@
 #include "Buffer.h"
 #include "Ref.h"
 
-class Font
+class Font : public RefCounted
 {
 public:
     Font();

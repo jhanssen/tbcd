@@ -1,12 +1,13 @@
 #ifndef LIST_H
 #define LIST_H
 
+#include "Ref.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <algorithm>
 
 template<typename T>
-class List
+class List : public RefCounted
 {
 public:
     List(unsigned int size = 0);

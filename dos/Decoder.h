@@ -7,7 +7,7 @@
 class Decoder
 {
 public:
-    class Image
+    class Image : public RefCounted
     {
     public:
         ~Image();

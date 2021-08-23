@@ -1,6 +1,20 @@
 #ifndef REF_H
 #define REF_H
 
+class RefCounted
+{
+public:
+    RefCounted();
+
+    void ref();
+    bool deref();
+
+    unsigned short refCount() const;
+
+private:
+    unsigned short mRefCount;
+};
+
 template<typename T>
 class Ref
 {
@@ -25,13 +39,28 @@ public:
     void reset(T* item = 0);
 
 private:
-    struct Data
-    {
-        unsigned short count;
-        T* item;
-    };
-    Data* mData;
+    T* mData;
 };
+
+inline RefCounted::RefCounted()
+    : mRefCount(0)
+{
+}
+
+inline void RefCounted::ref()
+{
+    ++mRefCount;
+}
+
+inline bool RefCounted::deref()
+{
+    return !--mRefCount;
+}
+
+inline unsigned short RefCounted::refCount() const
+{
+    return mRefCount;
+}
 
 template<typename T>
 inline Ref<T>::Ref()
@@ -41,10 +70,11 @@ inline Ref<T>::Ref()
 
 template<typename T>
 inline Ref<T>::Ref(T* item)
-    : mData(new Data)
+    : mData(item)
 {
-    mData->count = 1;
-    mData->item = item;
+    if (mData) {
+        mData->ref();
+    }
 }
 
 template<typename T>
@@ -52,15 +82,14 @@ inline Ref<T>::Ref(const Ref& ref)
     : mData(ref.mData)
 {
     if (mData) {
-        ++mData->count;
+        mData->ref();
     }
 }
 
 template<typename T>
 inline Ref<T>::~Ref()
 {
-    if (mData && !--mData->count) {
-        delete mData->item;
+    if (mData && mData->deref()) {
         delete mData;
     }
 }
@@ -68,13 +97,12 @@ inline Ref<T>::~Ref()
 template<typename T>
 inline Ref<T>& Ref<T>::operator=(const Ref& ref)
 {
-    if (mData && !--mData->count) {
-        delete mData->item;
+    if (mData && mData->deref()) {
         delete mData;
     }
     mData = ref.mData;
     if (mData) {
-        ++mData->count;
+        mData->ref();
     }
     return *this;
 }
@@ -82,9 +110,9 @@ inline Ref<T>& Ref<T>::operator=(const Ref& ref)
 template<typename T>
 T* Ref<T>::release()
 {
-    if (mData && mData->count == 1) {
-        T* item = mData->item;
-        delete mData;
+    if (mData && mData->refCount() == 1) {
+        mData->deref();
+        T* item = mData;
         mData = 0;
         return item;
     }
@@ -94,14 +122,12 @@ T* Ref<T>::release()
 template<typename T>
 void Ref<T>::reset(T* item)
 {
-    if (mData && !--mData->count) {
-        delete mData->item;
+    if (mData && mData->deref()) {
         delete mData;
     }
     if (item) {
-        mData = new Data;
-        mData->item = item;
-        mData->count = 1;
+        mData = item;
+        mData->ref();
     } else {
         mData = 0;
     }
@@ -122,25 +148,25 @@ inline Ref<T>::operator bool() const
 template<typename T>
 inline T* Ref<T>::operator->()
 {
-    return mData->item;
+    return mData;
 }
 
 template<typename T>
 inline const T* Ref<T>::operator->() const
 {
-    return mData->item;
+    return mData;
 }
 
 template<typename T>
 T& Ref<T>::operator*()
 {
-    return *mData->item;
+    return *mData;
 }
 
 template<typename T>
 const T& Ref<T>::operator*() const
 {
-    return *mData->item;
+    return *mData;
 }
 
 #endif

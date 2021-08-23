@@ -8,7 +8,7 @@
 #include <assert.h>
 #include <string.h>
 
-class Message
+class Message : public RefCounted
 {
 public:
     Message(unsigned short id, unsigned short numParts);
