@@ -300,12 +300,20 @@ function processData(opts: ProcessOptions, data: Buffer) {
                 if (rnames.length !== imgs.length) {
                     throw new Error(`name length mismatch ${rnames.length} {imgs.length}`);
                 }
-                for (let i = 0; i < imgs.length; ++i) {
+                const ii = rnames.map((n: string|undefined, i: number) => {
+                    return {
+                        sha1: imgs[i].sha1,
+                        name: n || nameOf(imgs[i].name)
+                    };
+                }).sort((a, b) => {
+                    return a.name.localeCompare(b.name);
+                });
+                for (const img of ii) {
                     // write sha1, name
                     const msg = allocMessage(opts);
                     msg.write("it");
-                    msg.write(zero(imgs[i].sha1));
-                    msg.write(zero(rnames[i] || nameOf(imgs[i].name)));
+                    msg.write(zero(img.sha1));
+                    msg.write(zero(img.name));
                     sendMessage(opts, msg);
                 }
             }).catch((e: Error) => { throw e; });
