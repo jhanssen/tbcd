@@ -26,6 +26,9 @@ private:
     void clearQueue();
     void addOrRemoveQueue(int item);
 
+    bool addHighlight(unsigned int delta);
+    bool subtractHighlight(unsigned int delta);
+
 private:
     bool mDone;
     Ref<Font> mLargeFont;
@@ -40,8 +43,8 @@ private:
     unsigned int mHighlighted;
     Ref<CBuffer> mSelectedPending;
     int mSelected;
-    int mFirstItem;
-    int mVisibleItems;
+    unsigned int mFirstItem;
+    unsigned int mVisibleItems;
     Connection* mConnection;
 
     static Engine* sEngine;

@@ -424,6 +424,34 @@ void Engine::addOrRemoveQueue(int item)
     mConnection->setQueue(mQueue);
 }
 
+bool Engine::addHighlight(unsigned int delta)
+{
+    const unsigned int item = std::min(mHighlighted + delta, mItems->size() - 1);
+    if (item == mHighlighted)
+        return false;
+    if (item - mFirstItem >= mVisibleItems)
+        mFirstItem = item - mVisibleItems + 1;
+    mHighlighted = item;
+    mImagePending = mItems->at(mHighlighted)->disc;
+    mImageTimer.start(18);
+    return true;
+}
+
+bool Engine::subtractHighlight(unsigned int delta)
+{
+    if (delta > mHighlighted)
+        delta = mHighlighted;
+    const unsigned item = mHighlighted - delta;
+    if (item == mHighlighted)
+        return false;
+    if (item <= mFirstItem)
+        mFirstItem = item;
+    mHighlighted = item;
+    mImagePending = mItems->at(mHighlighted)->disc;
+    mImageTimer.start(18);
+    return true;
+}
+
 void Engine::process()
 {
     static BoxAnimation boxAnimation;
@@ -511,6 +539,8 @@ void Engine::process()
 
     static bool downPressed = false;
     static bool upPressed = false;
+    static bool pgDownPressed = false;
+    static bool pgUpPressed = false;
     static bool enterPressed = false;
     static bool spacePressed = false;
 
@@ -519,15 +549,22 @@ void Engine::process()
         upPressed = true;
     } else if (upPressed) {
         upPressed = false;
-        if (mHighlighted > 0) {
-            if (mHighlighted == mFirstItem)
-                --mFirstItem;
-            --mHighlighted;
+        if (subtractHighlight(1)) {
             highlightAnimation.reset(mSmallFont, mItems->at(mHighlighted)->name,
                                      mHighlighted - mFirstItem,
                                      mHighlighted == mSelected ? SelectedItemColor : HighlightColor);
-            mImagePending = mItems->at(mHighlighted)->disc;
-            mImageTimer.start(18);
+            needsUpdate = true;
+        }
+    }
+    // page up
+    if (extendedKeys[0x49] == 1) {
+        pgUpPressed = true;
+    } else if (pgUpPressed) {
+        pgUpPressed = false;
+        if (subtractHighlight(mVisibleItems - 1)) {
+            highlightAnimation.reset(mSmallFont, mItems->at(mHighlighted)->name,
+                                     mHighlighted - mFirstItem,
+                                     mHighlighted == mSelected ? SelectedItemColor : HighlightColor);
             needsUpdate = true;
         }
     }
@@ -536,18 +573,26 @@ void Engine::process()
         downPressed = true;
     } else if (downPressed) {
         downPressed = false;
-        if (mHighlighted < mItems->size() - 1) {
-            if (mHighlighted - mFirstItem + 1 == mVisibleItems)
-                ++mFirstItem;
-            ++mHighlighted;
+        if (addHighlight(1)) {
             highlightAnimation.reset(mSmallFont, mItems->at(mHighlighted)->name,
                                      mHighlighted - mFirstItem,
                                      mHighlighted == mSelected ? SelectedItemColor : HighlightColor);
-            mImagePending = mItems->at(mHighlighted)->disc;
-            mImageTimer.start(18);
             needsUpdate = true;
         }
     }
+    // page down
+    if (extendedKeys[0x51] == 1) {
+        pgDownPressed = true;
+    } else if (pgDownPressed) {
+        pgDownPressed = false;
+        if (addHighlight(mVisibleItems - 1)) {
+            highlightAnimation.reset(mSmallFont, mItems->at(mHighlighted)->name,
+                                     mHighlighted - mFirstItem,
+                                     mHighlighted == mSelected ? SelectedItemColor : HighlightColor);
+            needsUpdate = true;
+        }
+    }
+
     // enter
     if (normalKeys[0x1c] == 1 || extendedKeys[0x1c] == 1) {
         enterPressed = true;
