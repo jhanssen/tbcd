@@ -395,15 +395,17 @@ export class API extends EventEmitter {
             // console.log("processed file", this.currentCmd, data.slice(1, data.length - 1));
             assert(this.currentCmd !== undefined, "currentCmd must not be undefined");
             let fn = this.currentCmd.substr(14);
+            while (fn[0] === "\"")
+                fn = fn.substr(1);
+            while (fn[fn.length - 1] === "\"")
+                fn = fn.substr(0, fn.length -1 );
+            let sfn = fn;
             const slash = fn.lastIndexOf("/");
-            if (slash !== -1) {
-                fn = fn.substr(slash + 1);
-                if (fn[fn.length - 1] === "\"")
-                    fn = fn.substr(0, fn.length -1 );
-            }
+            if (slash !== -1)
+                sfn = sfn.substr(slash + 1);
             const lines = data.slice(1, data.length - 1);
             const sha1 = crypto.createHash("sha1");
-            sha1.update(fn);
+            sha1.update(sfn);
             for (const line of lines) {
                 sha1.update(line);
             }
