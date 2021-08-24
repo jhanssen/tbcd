@@ -131,7 +131,7 @@ export class API extends EventEmitter {
                 throw new Error(`No images`);
             }
         }
-        this.write(`disk select ${name}`);
+        this.write(`disk select "${name}"`);
         this.write("status", (data: string) => {
             if (data.indexOf("Unable to open") !== -1) {
                 this.finalizeCurrentFile();
@@ -372,7 +372,7 @@ export class API extends EventEmitter {
             assert(typeof dir === "string", "dir must be string");
             const oldDir = this.currentDir;
             this.currentDir = dir + "/";
-            this.write(`cd ${dir}`);
+            this.write(`cd "${dir}"`);
             this.write("dir", (data: string) => {
                 const ok = data.indexOf("Error changing") === -1;
                 if (!ok)
@@ -383,7 +383,7 @@ export class API extends EventEmitter {
         } else if (this.pendingFiles.length > 0) {
             const file = this.pendingFiles.shift();
             assert(typeof file === "string", "dir must be string");
-            this.write(`disk describe ${file}`);
+            this.write(`disk describe "${file}"`);
             return false;
         }
 
@@ -406,7 +406,7 @@ export class API extends EventEmitter {
         if (this.pendingFiles.length > 0) {
             const file = this.pendingFiles.shift();
             assert(typeof file === "string", "dir must be string");
-            this.write(`disk describe ${file}`);
+            this.write(`disk describe "${file}"`);
             return false;
         }
         return true;
