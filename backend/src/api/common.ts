@@ -400,7 +400,7 @@ export class API extends EventEmitter {
             while (fn[fn.length - 1] === "\"")
                 fn = fn.substr(0, fn.length -1 );
             let sfn = fn;
-            const slash = fn.lastIndexOf("/");
+            const slash = sfn.lastIndexOf("/");
             if (slash !== -1)
                 sfn = sfn.substr(slash + 1);
             const lines = data.slice(1, data.length - 1);
