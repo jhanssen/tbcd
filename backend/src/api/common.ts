@@ -394,7 +394,13 @@ export class API extends EventEmitter {
         if (data.length > 1 && data[1].indexOf("Unable to open") == -1) {
             // console.log("processed file", this.currentCmd, data.slice(1, data.length - 1));
             assert(this.currentCmd !== undefined, "currentCmd must not be undefined");
-            const fn = this.currentCmd.substr(14);
+            let fn = this.currentCmd.substr(14);
+            const slash = fn.lastIndexOf("/");
+            if (slash !== -1) {
+                fn = fn.substr(slash + 1);
+                if (fn[fn.length - 1] === "\"")
+                    fn = fn.substr(0, fn.length -1 );
+            }
             const lines = data.slice(1, data.length - 1);
             const sha1 = crypto.createHash("sha1");
             sha1.update(fn);
